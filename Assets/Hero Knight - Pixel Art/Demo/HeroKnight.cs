@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 
 public class HeroKnight : MonoBehaviour
 {
@@ -15,6 +16,12 @@ public class HeroKnight : MonoBehaviour
     private int m_currentAttack = 0;
     private float m_timeSinceAttack = 0.0f;
     private float m_delayToIdle = 0.0f;
+
+    // New variables for attack collision
+    [SerializeField] private Transform m_swordHitbox;
+    [SerializeField] private float m_attackRange = 0.5f;
+    [SerializeField] private LayerMask m_enemyLayers;
+    [SerializeField] private int m_attackDamage = 40;
 
     // Use this for initialization
     void Start()
@@ -80,6 +87,9 @@ public class HeroKnight : MonoBehaviour
 
             // Reset timer
             m_timeSinceAttack = 0.0f;
+
+            // Perform the attack
+            Attack();
         }
 
         // Run
@@ -95,9 +105,36 @@ public class HeroKnight : MonoBehaviour
         {
             // Prevents flickering transitions to idle
             m_delayToIdle -= Time.deltaTime;
-            if(m_delayToIdle < 0)
-                m_animator.SetInteger("AnimState", 0);
+                if(m_delayToIdle < 0)
+                    m_animator.SetInteger("AnimState", 0);
         }
+    }
+
+    // Method to handle the attack
+    void Attack()
+    {
+        // Detect enemies in range of attack
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(m_swordHitbox.position, m_attackRange, m_enemyLayers);
+
+        // Damage them
+        foreach(Collider2D enemy in hitEnemies)
+        {
+            ZombieHealth zombieHealth = enemy.GetComponent<ZombieHealth>();
+            if (zombieHealth != null)
+            {
+                zombieHealth.TakeDamage(m_attackDamage);
+                Debug.Log("Hit zombie! Current health: " + (zombieHealth.maxHealth - m_attackDamage));
+            }
+        }
+    }
+
+    // Draw the attack range in the editor
+    void OnDrawGizmosSelected()
+    {
+        if (m_swordHitbox == null)
+            return;
+
+        Gizmos.DrawWireSphere(m_swordHitbox.position, m_attackRange);
     }
 
     // Animation Events
