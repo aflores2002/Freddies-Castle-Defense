@@ -11,6 +11,9 @@ public class ZombieSpawner : MonoBehaviour
     [SerializeField] private float rightEdgeX = 10f;
     [SerializeField] private float zombieSpeed = 1f;
 
+    [SerializeField] private string zombieSortingLayerName = "Zombies"; // Set this to your top layer
+    [SerializeField] private int zombieOrderInLayer = 101; // Adjust if needed
+
     private float timeSinceLastSpawn = 0f;
     private List<Transform> lanes;
 
@@ -47,12 +50,20 @@ public class ZombieSpawner : MonoBehaviour
         int randomLaneIndex = Random.Range(0, numberOfLanes);
         Vector3 spawnPosition = new Vector3(rightEdgeX, lanes[randomLaneIndex].position.y, 0);
 
-        GameObject zombie = Instantiate(zombiePrefab, spawnPosition, Quaternion.identity);
-        ZombieMovement zombieMovement = zombie.AddComponent<ZombieMovement>();
+        GameObject zombie = Instantiate(zombiePrefab, spawnPosition, Quaternion.Euler(180, 0, 180));
+
+        // Apply Layer Override to all Sprite Renderers
+        SpriteRenderer[] renderers = zombie.GetComponentsInChildren<SpriteRenderer>(true);
+        foreach (SpriteRenderer renderer in renderers)
+        {
+            renderer.sortingLayerName = zombieSortingLayerName;
+            renderer.sortingOrder = zombieOrderInLayer;
+        }
+
+        ZombieMovement zombieMovement = zombie.GetComponent<ZombieMovement>() ?? zombie.AddComponent<ZombieMovement>();
         zombieMovement.speed = zombieSpeed;
 
-        // Rotate the zombie 180 degrees around both X and Z axes
-        zombie.transform.rotation = Quaternion.Euler(180, 0, 180);
+        ZombieHealth zombieHealth = zombie.GetComponent<ZombieHealth>() ?? zombie.AddComponent<ZombieHealth>();
     }
 }
 

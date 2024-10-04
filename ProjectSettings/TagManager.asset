@@ -8,7 +8,7 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Knight
   - Water
   - UI
   - Enemy
@@ -22,6 +22,7 @@ TagManager:
   - 
   - 
   - 
+  - track
   - 
   - 
   - 
@@ -29,8 +30,7 @@ TagManager:
   - 
   - 
   - 
-  - 
-  - 
+  - Zombie
   - 
   - 
   - 
@@ -40,4 +40,13 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Knight
+    uniqueID: 2821398697
+    locked: 0
+  - name: track
+    uniqueID: 3930172187
+    locked: 0
+  - name: Enemy
+    uniqueID: 1779456179
     locked: 0
