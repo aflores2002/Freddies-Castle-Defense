@@ -1,6 +1,6 @@
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class ZombieSpawner : MonoBehaviour
 {
@@ -50,6 +50,9 @@ public class ZombieSpawner : MonoBehaviour
         GameObject zombie = Instantiate(zombiePrefab, spawnPosition, Quaternion.identity);
         ZombieMovement zombieMovement = zombie.AddComponent<ZombieMovement>();
         zombieMovement.speed = zombieSpeed;
+
+        // Rotate the zombie 180 degrees around both X and Z axes
+        zombie.transform.rotation = Quaternion.Euler(180, 0, 180);
     }
 }
 
@@ -59,6 +62,7 @@ public class ZombieMovement : MonoBehaviour
 
     void Update()
     {
-        transform.Translate(Vector3.left * speed * Time.deltaTime);
+        // Move the zombie to the left
+        transform.Translate(Vector3.right * speed * Time.deltaTime);
     }
 }
