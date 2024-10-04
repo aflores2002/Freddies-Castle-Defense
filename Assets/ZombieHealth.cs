@@ -6,11 +6,14 @@ public class ZombieHealth : MonoBehaviour
     private int currentHealth;
     private Animator animator;
     private bool isDead = false;
+    private float hurtCooldown = 0.5f;  // Adjust this value as needed
+    private float lastHurtTime;
 
     void Start()
     {
         currentHealth = maxHealth;
         animator = GetComponent<Animator>();
+        lastHurtTime = -hurtCooldown;  // Allow immediate hurt on first hit
     }
 
     public void TakeDamage(int damage)
@@ -18,16 +21,23 @@ public class ZombieHealth : MonoBehaviour
         if (isDead) return;
 
         currentHealth -= damage;
+        Debug.Log($"Zombie took {damage} damage. Current health: {currentHealth}");
 
         if (currentHealth <= 0)
         {
             Die();
         }
-        else
+        else if (Time.time >= lastHurtTime + hurtCooldown)
         {
-            // Trigger hurt animation
-            animator.SetTrigger("Hurt");
+            Hurt();
         }
+    }
+
+    void Hurt()
+    {
+        lastHurtTime = Time.time;
+        animator.SetTrigger("Hurt");
+        Debug.Log("Hurt state triggered");
     }
 
     void Die()
@@ -35,8 +45,7 @@ public class ZombieHealth : MonoBehaviour
         if (isDead) return;
 
         isDead = true;
-
-        // Trigger death animation
+        Debug.Log("Death state triggered");
         animator.SetTrigger("Death");
 
         // Disable the zombie's collider
@@ -46,17 +55,18 @@ public class ZombieHealth : MonoBehaviour
             zombieCollider.enabled = false;
         }
 
-        // Disable all MonoBehaviour scripts attached to the zombie
-        MonoBehaviour[] scripts = GetComponents<MonoBehaviour>();
-        foreach (MonoBehaviour script in scripts)
+        // Disable the ZombieMovement script
+        ZombieMovement movement = GetComponent<ZombieMovement>();
+        if (movement != null)
         {
-            if (script != this) // Don't disable this script
-            {
-                script.enabled = false;
-            }
+            movement.enabled = false;
         }
 
-        // You might want to destroy the zombie after a delay or handle it differently
-        Destroy(gameObject, 2f);  // Destroy after 2 seconds
+        // Get the length of the death animation
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        float deathAnimationLength = stateInfo.length;
+
+        // Destroy the zombie after the animation finishes
+        Destroy(gameObject, deathAnimationLength);
     }
 }
