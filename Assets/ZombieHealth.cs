@@ -38,6 +38,14 @@ public class ZombieHealth : MonoBehaviour
         lastHurtTime = Time.time;
         animator.SetTrigger("Hurt");
         Debug.Log("Hurt state triggered");
+
+        // Disable the ZombieMovement script
+        ZombieMovement movement = GetComponent<ZombieMovement>();
+        if (movement != null)
+        {
+            movement.enabled = false;
+            animator.SetTrigger("Idle");
+        }
     }
 
     void Die()
