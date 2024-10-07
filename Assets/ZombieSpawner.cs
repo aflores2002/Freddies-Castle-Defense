@@ -10,11 +10,11 @@ public class ZombieSpawner : MonoBehaviour
     [SerializeField] private float spawnInterval = 5f;
     [SerializeField] private float rightEdgeX = 10f;
     [SerializeField] private float zombieSpeed = 1f;
+    [SerializeField] private float leftEdgeX = -10f; // Add this line
 
-    [SerializeField] private string zombieSortingLayerName = "Zombies"; // Set this to your top layer
-    [SerializeField] private int zombieOrderInLayer = 101; // Adjust if needed
+    [SerializeField] private string zombieSortingLayerName = "Zombies";
+    [SerializeField] private int zombieOrderInLayer = 101;
 
-    private float timeSinceLastSpawn = 0f;
     private List<Transform> lanes;
 
     void Start()
@@ -62,6 +62,7 @@ public class ZombieSpawner : MonoBehaviour
 
         ZombieMovement zombieMovement = zombie.GetComponent<ZombieMovement>() ?? zombie.AddComponent<ZombieMovement>();
         zombieMovement.speed = zombieSpeed;
+        zombieMovement.leftEdgeX = leftEdgeX; // Add this line
 
         ZombieHealth zombieHealth = zombie.GetComponent<ZombieHealth>() ?? zombie.AddComponent<ZombieHealth>();
     }
@@ -70,10 +71,31 @@ public class ZombieSpawner : MonoBehaviour
 public class ZombieMovement : MonoBehaviour
 {
     public float speed = 1f;
+    public float leftEdgeX = -10f;
+        public int damageToCastle = 20; // Variable for configurable damage
+    private CastleHealth castleHealth;
+
+    void Start()
+    {
+        castleHealth = FindObjectOfType<CastleHealth>();
+    }
 
     void Update()
     {
         // Move the zombie to the left
         transform.Translate(Vector3.right * speed * Time.deltaTime);
+
+        // Check if the zombie has reached the left edge of the screen
+        if (transform.position.x <= leftEdgeX)
+        {
+            // Damage the castle
+            if (castleHealth != null)
+            {
+                castleHealth.TakeDamage(damageToCastle);
+            }
+
+            // Destroy the zombie
+            Destroy(gameObject);
+        }
     }
 }
