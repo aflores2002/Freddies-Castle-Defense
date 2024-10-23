@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class ZombieHealth : MonoBehaviour
 {
@@ -6,8 +7,10 @@ public class ZombieHealth : MonoBehaviour
     private int currentHealth;
     private Animator animator;
     private bool isDead = false;
-    private float hurtCooldown = 0.5f;  // Adjust this value as needed
+    private float hurtCooldown = 0.5f;
     private float lastHurtTime;
+
+    public UnityEvent OnZombieDeath = new UnityEvent();
 
     void Start()
     {
@@ -55,6 +58,9 @@ public class ZombieHealth : MonoBehaviour
         isDead = true;
         Debug.Log("Death state triggered");
         animator.SetTrigger("Death");
+
+        // Invoke the death event
+        OnZombieDeath.Invoke();
 
         // Disable the zombie's collider
         Collider2D zombieCollider = GetComponent<Collider2D>();

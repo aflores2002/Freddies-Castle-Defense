@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 4e02a897869f2403f9a9bced726924d5
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - waveCounterText: {fileID: 7725050738557145450, guid: 305ffad1cc92d49dc9767e02e36b296c, type: 3}
+  - killCounterText: {fileID: 2293935183558504150, guid: d4e217c79a44a401ea2115ef2bd42e38, type: 3}
+  - waveCompletePanel: {instanceID: 0}
+  - upgradeDamageButton: {instanceID: 0}
+  - healCastleButton: {instanceID: 0}
+  - nextWaveButton: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
