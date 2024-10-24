@@ -9,6 +9,9 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private int baseZombiesPerWave = 10;
     [SerializeField] private int zombieIncreasePerWave = 5;
 
+    [Header("Castle Healing")]
+    [SerializeField] private int healAmount = 10;
+
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI waveCounterText;
     [SerializeField] private TextMeshProUGUI killCounterText;
@@ -22,15 +25,23 @@ public class WaveManager : MonoBehaviour
     private int requiredKills;
     private bool isWaveComplete = false;
     private ZombieSpawner zombieSpawner;
+    private CastleHealth castleHealth;
 
     private void Start()
     {
         zombieSpawner = FindObjectOfType<ZombieSpawner>();
+        castleHealth = FindObjectOfType<CastleHealth>();
         requiredKills = baseZombiesPerWave;
+
+        if (castleHealth == null)
+        {
+            Debug.LogError("WaveManager: CastleHealth component not found in scene!");
+        }
 
         // Setup UI
         UpdateWaveCounter();
         UpdateKillCounter();
+        UpdateHealButtonInteractivity();
         waveCompletePanel.SetActive(false);
 
         // Add button listeners
@@ -60,8 +71,27 @@ public class WaveManager : MonoBehaviour
             zombieSpawner.StopSpawning();
         }
 
+        // Update heal button interactivity
+        UpdateHealButtonInteractivity();
+
         // Show wave complete panel
         waveCompletePanel.SetActive(true);
+    }
+
+    private void UpdateHealButtonInteractivity()
+    {
+        if (healCastleButton != null && castleHealth != null)
+        {
+            // Disable heal button if castle is at max health
+            healCastleButton.interactable = castleHealth.CurrentHealth < castleHealth.MaximumHealth;
+
+            // Update the button text to show potential healing
+            TextMeshProUGUI buttonText = healCastleButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (buttonText != null)
+            {
+                buttonText.text = $"Heal Castle (+{healAmount} HP)";
+            }
+        }
     }
 
     private void UpdateKillCounter()
@@ -74,18 +104,7 @@ public class WaveManager : MonoBehaviour
         waveCounterText.text = $"Wave {currentWave}";
     }
 
-    // Button click handlers
-    private void OnUpgradeDamageClicked()
-    {
-        Debug.Log("Upgrade Damage clicked - Feature to be implemented");
-    }
-
-    private void OnHealCastleClicked()
-    {
-        Debug.Log("Heal Castle clicked - Feature to be implemented");
-    }
-
-    private void OnNextWaveClicked()
+    private void StartNextWave()
     {
         // Hide panel
         waveCompletePanel.SetActive(false);
@@ -107,5 +126,31 @@ public class WaveManager : MonoBehaviour
         {
             zombieSpawner.StartSpawning();
         }
+    }
+
+    // Button click handlers
+    private void OnUpgradeDamageClicked()
+    {
+        Debug.Log("Upgrade Damage clicked - Feature to be implemented");
+    }
+
+    private void OnHealCastleClicked()
+    {
+        if (castleHealth != null && castleHealth.CurrentHealth < castleHealth.MaximumHealth)
+        {
+            castleHealth.Heal(healAmount);
+            Debug.Log($"Castle healed for {healAmount} HP. Current health: {castleHealth.CurrentHealth}");
+
+            // Update button state
+            UpdateHealButtonInteractivity();
+
+            // Start next wave
+            StartNextWave();
+        }
+    }
+
+    private void OnNextWaveClicked()
+    {
+        StartNextWave();
     }
 }

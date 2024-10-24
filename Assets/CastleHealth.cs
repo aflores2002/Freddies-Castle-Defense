@@ -30,7 +30,8 @@ public class CastleHealth : MonoBehaviour
         {
             CurrentHealth = currentHealth,
             PreviousHealth = previousHealth,
-            HealthPercentage = CurrentHealthPercentage
+            HealthPercentage = CurrentHealthPercentage,
+            IsHeal = false
         });
 
         if (currentHealth <= 0)
@@ -39,10 +40,26 @@ public class CastleHealth : MonoBehaviour
         }
     }
 
+    public void Heal(int amount)
+    {
+        if (amount <= 0) return;
+
+        int previousHealth = currentHealth;
+        currentHealth = Mathf.Min(currentHealth + amount, maxHealth); // Ensure health doesn't exceed max
+
+        OnHealthChanged.Invoke(new HealthChangeData
+        {
+            CurrentHealth = currentHealth,
+            PreviousHealth = previousHealth,
+            HealthPercentage = CurrentHealthPercentage,
+            IsHeal = true
+        });
+    }
+
     private void GameOver()
     {
         Debug.Log("Game Over! Castle has been destroyed.");
-        // Add your game over logic here (e.g., show game over screen, restart level, etc.)
+        // Add your game over logic here
     }
 }
 
@@ -51,4 +68,5 @@ public struct HealthChangeData
     public int CurrentHealth;
     public int PreviousHealth;
     public float HealthPercentage;
+    public bool IsHeal;
 }
