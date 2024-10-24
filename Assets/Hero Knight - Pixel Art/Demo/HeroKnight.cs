@@ -8,6 +8,16 @@ public class HeroKnight : MonoBehaviour
     [SerializeField] float m_rollForce = 6.0f;
     [SerializeField] GameObject m_slideDust;
 
+    [Header("Combat Settings")]
+    [SerializeField] private Transform m_swordHitbox;
+    [SerializeField] private float m_attackRange = 0.5f;
+    [SerializeField] private LayerMask m_enemyLayers;
+    [SerializeField] private int m_baseDamage = 50;
+    [SerializeField] private int m_damageUpgradeAmount = 25;
+
+    // Property to access current damage
+    public int CurrentDamage { get; private set; }
+
     private Animator m_animator;
     private Rigidbody2D m_body2d;
     private Sensor_HeroKnight m_groundSensor;
@@ -16,12 +26,7 @@ public class HeroKnight : MonoBehaviour
     private int m_currentAttack = 0;
     private float m_timeSinceAttack = 0.0f;
     private float m_delayToIdle = 0.0f;
-
-    // New variables for attack collision
-    [SerializeField] private Transform m_swordHitbox;
-    [SerializeField] private float m_attackRange = 0.5f;
-    [SerializeField] private LayerMask m_enemyLayers;
-    [SerializeField] private int m_attackDamage = 40;
+    private int m_upgradeLevel = 0;
 
     // Use this for initialization
     void Start()
@@ -29,6 +34,7 @@ public class HeroKnight : MonoBehaviour
         m_animator = GetComponent<Animator>();
         m_body2d = GetComponent<Rigidbody2D>();
         m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_HeroKnight>();
+        CurrentDamage = m_baseDamage;
 
         // Set gravity scale to 0 to allow free vertical movement
         m_body2d.gravityScale = 0f;
@@ -110,7 +116,6 @@ public class HeroKnight : MonoBehaviour
         }
     }
 
-    // Method to handle the attack
     void Attack()
     {
         // Detect enemies in range of attack
@@ -122,10 +127,22 @@ public class HeroKnight : MonoBehaviour
             ZombieHealth zombieHealth = enemy.GetComponent<ZombieHealth>();
             if (zombieHealth != null)
             {
-                zombieHealth.TakeDamage(m_attackDamage);
-                Debug.Log("Hit zombie! Current health: " + (zombieHealth.maxHealth - m_attackDamage));
+                zombieHealth.TakeDamage(CurrentDamage);
+                Debug.Log($"Hit zombie with {CurrentDamage} damage!");
             }
         }
+    }
+
+    public void UpgradeDamage()
+    {
+        m_upgradeLevel++;
+        CurrentDamage = m_baseDamage + (m_damageUpgradeAmount * m_upgradeLevel);
+        Debug.Log($"Sword damage upgraded to {CurrentDamage}!");
+    }
+
+    public string GetDamageUpgradeText()
+    {
+        return $"Upgrade Sword DMG (+{m_damageUpgradeAmount})";
     }
 
     // Draw the attack range in the editor
@@ -138,7 +155,6 @@ public class HeroKnight : MonoBehaviour
     }
 
     // Animation Events
-    // Called in slide animation.
     void AE_SlideDust()
     {
         Vector3 spawnPosition;
