@@ -216,6 +216,10 @@ PrefabInstance:
       value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 9043920546160527475, guid: a4b4a6d32bcb19248a754d6602ffc7e4, type: 3}
+      propertyPath: m_baseDamage
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 9043920546160527475, guid: a4b4a6d32bcb19248a754d6602ffc7e4, type: 3}
       propertyPath: m_attackRange
       value: 1
       objectReference: {fileID: 0}
@@ -271,7 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e02a897869f2403f9a9bced726924d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseZombiesPerWave: 10
+  baseZombiesPerWave: 5
   zombieIncreasePerWave: 5
   healAmount: 10
   waveCounterText: {fileID: 1838357092}
@@ -1234,9 +1238,14 @@ MonoBehaviour:
   zombiePrefab: {fileID: 3997166607994446226, guid: cf7dd10328b1042ea8968e78805b871e, type: 3}
   numberOfLanes: 5
   laneHeight: 1
-  spawnInterval: 2
+  baseSpawnInterval: 4
+  baseZombieSpeed: 1.5
+  spawnIntervalDecrease: 1
+  speedIncrease: 0.5
+  minimumSpawnInterval: 1
+  baseZombieHealth: 100
+  healthIncreasePerWave: 20
   rightEdgeX: 10
-  zombieSpeed: 1.5
   leftEdgeX: -10
   zombieSortingLayerName: Enemy
   zombieOrderInLayer: 101
@@ -1385,7 +1394,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Kills: 0/10'
+  m_text: 'Kills: 0/5
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

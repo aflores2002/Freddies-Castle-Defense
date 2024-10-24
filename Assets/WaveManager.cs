@@ -6,7 +6,7 @@ using System.Collections;
 public class WaveManager : MonoBehaviour
 {
     [Header("Wave Settings")]
-    [SerializeField] private int baseZombiesPerWave = 10;
+    [SerializeField] private int baseZombiesPerWave = 5;
     [SerializeField] private int zombieIncreasePerWave = 5;
 
     [Header("Castle Healing")]
@@ -108,6 +108,7 @@ public class WaveManager : MonoBehaviour
         if (zombieSpawner != null)
         {
             zombieSpawner.StopSpawning();
+            zombieSpawner.DestroyAllZombies(); // Destroy remaining zombies
         }
 
         UpdateButtonsText();
@@ -138,6 +139,7 @@ public class WaveManager : MonoBehaviour
 
         if (zombieSpawner != null)
         {
+            zombieSpawner.IncreaseDifficulty(currentWave); // Pass the wave number
             zombieSpawner.StartSpawning();
         }
     }

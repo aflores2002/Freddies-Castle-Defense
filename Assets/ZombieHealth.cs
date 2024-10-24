@@ -3,7 +3,7 @@ using UnityEngine.Events;
 
 public class ZombieHealth : MonoBehaviour
 {
-    public int maxHealth = 100;
+    [SerializeField] private int maxHealth = 100;
     private int currentHealth;
     private Animator animator;
     private bool isDead = false;
@@ -14,9 +14,15 @@ public class ZombieHealth : MonoBehaviour
 
     void Start()
     {
-        currentHealth = maxHealth;
         animator = GetComponent<Animator>();
-        lastHurtTime = -hurtCooldown;  // Allow immediate hurt on first hit
+        lastHurtTime = -hurtCooldown;
+        currentHealth = maxHealth; // Will use the default if SetMaxHealth wasn't called
+    }
+
+    public void SetMaxHealth(int newMaxHealth)
+    {
+        maxHealth = newMaxHealth;
+        currentHealth = maxHealth;
     }
 
     public void TakeDamage(int damage)
@@ -24,7 +30,7 @@ public class ZombieHealth : MonoBehaviour
         if (isDead) return;
 
         currentHealth -= damage;
-        Debug.Log($"Zombie took {damage} damage. Current health: {currentHealth}");
+        Debug.Log($"Zombie took {damage} damage. Current health: {currentHealth}/{maxHealth}");
 
         if (currentHealth <= 0)
         {

@@ -4,21 +4,37 @@ using System.Collections.Generic;
 
 public class ZombieSpawner : MonoBehaviour
 {
+    [Header("Spawn Settings")]
     [SerializeField] private GameObject zombiePrefab;
     [SerializeField] private int numberOfLanes = 5;
     [SerializeField] private float laneHeight = 1f;
-    [SerializeField] private float spawnInterval = 5f;
+    [SerializeField] private float baseSpawnInterval = 5f;
+    [SerializeField] private float baseZombieSpeed = 1f;
+
+    [Header("Difficulty Settings")]
+    [SerializeField] private float spawnIntervalDecrease = 0.5f;
+    [SerializeField] private float speedIncrease = 0.1f;
+    [SerializeField] private float minimumSpawnInterval = 1f;
+    [SerializeField] private int baseZombieHealth = 100;
+    [SerializeField] private int healthIncreasePerWave = 20;
+
+    [Header("Position Settings")]
     [SerializeField] private float rightEdgeX = 10f;
-    [SerializeField] private float zombieSpeed = 1f;
     [SerializeField] private float leftEdgeX = -10f;
 
+    [Header("Visual Settings")]
     [SerializeField] private string zombieSortingLayerName = "Zombies";
     [SerializeField] private int zombieOrderInLayer = 101;
 
     private List<Transform> lanes;
-    private bool isSpawning = false;  // Changed to false initially
+    private bool isSpawning = false;
     private Coroutine spawnCoroutine;
     private WaveManager waveManager;
+
+    private float currentSpawnInterval;
+    private float currentZombieSpeed;
+    private int currentZombieHealth;
+    private int currentWave = 1;
 
     void Start()
     {
@@ -32,9 +48,31 @@ public class ZombieSpawner : MonoBehaviour
 
         InitializeLanes();
         waveManager = FindObjectOfType<WaveManager>();
-        StartSpawning();  // This will now work since isSpawning is false initially
+        ResetDifficultyToBase();
+        StartSpawning();
 
         Debug.Log("ZombieSpawner: Initialization complete");
+    }
+
+    public void ResetDifficultyToBase()
+    {
+        currentSpawnInterval = baseSpawnInterval;
+        currentZombieSpeed = baseZombieSpeed;
+        currentZombieHealth = baseZombieHealth;
+        currentWave = 1;
+    }
+
+    public void IncreaseDifficulty(int waveNumber)
+    {
+        currentWave = waveNumber;
+
+        // Decrease spawn interval but don't go below minimum
+        currentSpawnInterval = Mathf.Max(minimumSpawnInterval, currentSpawnInterval - spawnIntervalDecrease);
+        currentZombieSpeed += speedIncrease;
+        currentZombieHealth = baseZombieHealth + (healthIncreasePerWave * (currentWave - 1));
+
+        Debug.Log($"Wave {currentWave} Difficulty - Interval: {currentSpawnInterval:F2}, " +
+                 $"Speed: {currentZombieSpeed:F2}, Health: {currentZombieHealth}");
     }
 
     void InitializeLanes()
@@ -46,7 +84,7 @@ public class ZombieSpawner : MonoBehaviour
         for (int i = 0; i < numberOfLanes; i++)
         {
             GameObject lane = new GameObject($"Lane_{i}");
-            lane.transform.parent = transform; // Parent to the spawner
+            lane.transform.parent = transform;
             lane.transform.position = new Vector3(0, startY - i * laneHeight, 0);
             lanes.Add(lane.transform);
         }
@@ -79,13 +117,24 @@ public class ZombieSpawner : MonoBehaviour
         }
     }
 
+    public void DestroyAllZombies()
+    {
+        // Find all zombies in the scene
+        GameObject[] zombies = GameObject.FindGameObjectsWithTag("Zombie");
+        foreach (GameObject zombie in zombies)
+        {
+            Destroy(zombie);
+        }
+        Debug.Log($"Destroyed {zombies.Length} zombies");
+    }
+
     IEnumerator SpawnZombies()
     {
         Debug.Log("ZombieSpawner: Starting spawn coroutine");
         while (isSpawning)
         {
             SpawnZombie();
-            yield return new WaitForSeconds(spawnInterval);
+            yield return new WaitForSeconds(currentSpawnInterval);
         }
     }
 
@@ -100,12 +149,9 @@ public class ZombieSpawner : MonoBehaviour
         int randomLaneIndex = Random.Range(0, numberOfLanes);
         Vector3 spawnPosition = new Vector3(rightEdgeX, lanes[randomLaneIndex].position.y, 0);
 
-        Debug.Log($"ZombieSpawner: Attempting to spawn zombie at position {spawnPosition}");
-
         GameObject zombie = Instantiate(zombiePrefab, spawnPosition, Quaternion.Euler(180, 0, 180));
-        Debug.Log("ZombieSpawner: Zombie instantiated");
+        zombie.tag = "Zombie";
 
-        // Apply Layer Override to all Sprite Renderers
         SpriteRenderer[] renderers = zombie.GetComponentsInChildren<SpriteRenderer>(true);
         foreach (SpriteRenderer renderer in renderers)
         {
@@ -114,11 +160,14 @@ public class ZombieSpawner : MonoBehaviour
         }
 
         ZombieMovement zombieMovement = zombie.GetComponent<ZombieMovement>() ?? zombie.AddComponent<ZombieMovement>();
-        zombieMovement.speed = zombieSpeed;
+        zombieMovement.speed = currentZombieSpeed;
         zombieMovement.leftEdgeX = leftEdgeX;
 
         ZombieHealth zombieHealth = zombie.GetComponent<ZombieHealth>() ?? zombie.AddComponent<ZombieHealth>();
+        zombieHealth.SetMaxHealth(currentZombieHealth); // Set the scaled health
         zombieHealth.OnZombieDeath.AddListener(OnZombieKilled);
+
+        Debug.Log($"Spawned zombie with Health: {currentZombieHealth}, Speed: {currentZombieSpeed:F2}");
     }
 
     private void OnZombieKilled()
@@ -129,14 +178,16 @@ public class ZombieSpawner : MonoBehaviour
         }
     }
 
-    // Add validation in the inspector
     void OnValidate()
     {
-        if (spawnInterval <= 0)
-            spawnInterval = 1f;
+        if (baseSpawnInterval < minimumSpawnInterval)
+            baseSpawnInterval = minimumSpawnInterval;
 
-        if (numberOfLanes <= 0)
-            numberOfLanes = 1;
+        if (spawnIntervalDecrease < 0)
+            spawnIntervalDecrease = 0;
+
+        if (speedIncrease < 0)
+            speedIncrease = 0;
     }
 }
 
