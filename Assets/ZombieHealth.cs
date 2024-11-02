@@ -10,13 +10,22 @@ public class ZombieHealth : MonoBehaviour
     private float hurtCooldown = 0.5f;
     private float lastHurtTime;
 
+    public bool IsBoss { get; set; } = false;
+
     public UnityEvent OnZombieDeath = new UnityEvent();
+
+    // AudioManager audioManager;
+
+    // private void Awake()
+    // {
+    //     audioManager = GameObject.FindGameObjectsWithTag("Audio").GetComponent<AudioManager>();
+    // }
 
     void Start()
     {
         animator = GetComponent<Animator>();
         lastHurtTime = -hurtCooldown;
-        currentHealth = maxHealth; // Will use the default if SetMaxHealth wasn't called
+        currentHealth = maxHealth;
     }
 
     public void SetMaxHealth(int newMaxHealth)
@@ -30,7 +39,20 @@ public class ZombieHealth : MonoBehaviour
         if (isDead) return;
 
         currentHealth -= damage;
-        Debug.Log($"Zombie took {damage} damage. Current health: {currentHealth}/{maxHealth}");
+
+        // Different debug messages for boss and normal zombies
+        if (IsBoss)
+        {
+            // AudioManager.Instance?.PlaySound("BossHit");
+
+            Debug.Log($"BOSS took {damage} damage. Current health: {currentHealth}/{maxHealth}");
+        }
+        else
+        {
+            // AudioManager.Instance?.PlaySound("ZombieHit");
+
+            Debug.Log($"Zombie took {damage} damage. Current health: {currentHealth}/{maxHealth}");
+        }
 
         if (currentHealth <= 0)
         {
@@ -62,6 +84,18 @@ public class ZombieHealth : MonoBehaviour
         if (isDead) return;
 
         isDead = true;
+
+        if (IsBoss)
+        {
+            // Play boss death sound
+            AudioManager.Instance.PlaySoundEffect("BossDeath");
+        }
+        else
+        {
+            // Play zombie death sound
+            AudioManager.Instance.PlaySoundEffect("ZombieDeath");
+        }
+
         Debug.Log("Death state triggered");
         animator.SetTrigger("Death");
 

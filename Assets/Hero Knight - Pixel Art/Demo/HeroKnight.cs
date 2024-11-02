@@ -28,6 +28,13 @@ public class HeroKnight : MonoBehaviour
     private float m_delayToIdle = 0.0f;
     private int m_upgradeLevel = 0;
 
+    // AudioManager audioManager;
+
+    // private void Awake()
+    // {
+    //     audioManager = GameObject.FindGameObjectWithTag("Audio").GetComponent<AudioManager>();
+    // }
+
     // Use this for initialization
     void Start()
     {
@@ -118,6 +125,15 @@ public class HeroKnight : MonoBehaviour
 
     void Attack()
     {
+        if (AudioManager.Instance == null)
+        {
+            Debug.LogError("AudioManager instance is null!");
+            return;
+        }
+
+        // Play sword swing sound
+        AudioManager.Instance.PlaySoundEffect("SwordSwing");
+
         // Detect enemies in range of attack
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(m_swordHitbox.position, m_attackRange, m_enemyLayers);
 

@@ -146,6 +146,9 @@ public class WaveManager : MonoBehaviour
 
     private void OnUpgradeDamageClicked()
     {
+        // Play UpgradeDamage
+        AudioManager.Instance.PlaySoundEffect("UpgradeDamage");
+
         if (heroKnight != null)
         {
             heroKnight.UpgradeDamage();
@@ -156,6 +159,9 @@ public class WaveManager : MonoBehaviour
 
     private void OnHealCastleClicked()
     {
+        // Play HealCastle
+        AudioManager.Instance.PlaySoundEffect("HealCastle");
+
         if (castleHealth != null && castleHealth.CurrentHealth < castleHealth.MaximumHealth)
         {
             castleHealth.Heal(healAmount);
@@ -166,6 +172,9 @@ public class WaveManager : MonoBehaviour
 
     private void OnNextWaveClicked()
     {
+        // Play AdvanceWave
+        AudioManager.Instance.PlaySoundEffect("AdvanceWave");
+
         StartNextWave();
     }
 }

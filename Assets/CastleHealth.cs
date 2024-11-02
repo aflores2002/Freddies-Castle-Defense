@@ -22,6 +22,9 @@ public class CastleHealth : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
+        // Play CastleDamage sound
+        AudioManager.Instance.PlaySoundEffect("CastleDamage");
+
         int previousHealth = currentHealth;
         currentHealth -= damage;
         currentHealth = Mathf.Max(currentHealth, 0); // Ensure health doesn't go below 0

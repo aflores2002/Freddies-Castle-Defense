@@ -1,3 +1,4 @@
+// ZombieSpawner.cs
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,6 +11,13 @@ public class ZombieSpawner : MonoBehaviour
     [SerializeField] private float laneHeight = 1f;
     [SerializeField] private float baseSpawnInterval = 5f;
     [SerializeField] private float baseZombieSpeed = 1f;
+
+    [Header("Boss Settings")]
+    [SerializeField] private int bossWaveInterval = 3;
+    [SerializeField] private float bossScale = 2.5f;
+    [SerializeField] private int bossHealth = 1000;
+    [SerializeField] private float bossSpeed = 0.5f;
+    [SerializeField] private Color bossColor = Color.red;
 
     [Header("Difficulty Settings")]
     [SerializeField] private float spawnIntervalDecrease = 0.5f;
@@ -35,6 +43,7 @@ public class ZombieSpawner : MonoBehaviour
     private float currentZombieSpeed;
     private int currentZombieHealth;
     private int currentWave = 1;
+    private bool isBossWave = false;
 
     void Start()
     {
@@ -60,19 +69,37 @@ public class ZombieSpawner : MonoBehaviour
         currentZombieSpeed = baseZombieSpeed;
         currentZombieHealth = baseZombieHealth;
         currentWave = 1;
+        isBossWave = false;
+        hasBossSpawned = false;
+
+        Debug.Log($"Reset to base difficulty - Interval: {currentSpawnInterval}, Speed: {currentZombieSpeed}, Health: {currentZombieHealth}");
     }
+
+    private bool hasBossSpawned = false; // New field to track if boss has spawned this wave
 
     public void IncreaseDifficulty(int waveNumber)
     {
         currentWave = waveNumber;
+        hasBossSpawned = false; // Reset boss spawn flag for new wave
 
-        // Decrease spawn interval but don't go below minimum
+        // Check if this is a boss wave
+        isBossWave = (currentWave % bossWaveInterval == 0);
+
+        // Normal wave difficulty progression (applies to all waves)
         currentSpawnInterval = Mathf.Max(minimumSpawnInterval, currentSpawnInterval - spawnIntervalDecrease);
         currentZombieSpeed += speedIncrease;
         currentZombieHealth = baseZombieHealth + (healthIncreasePerWave * (currentWave - 1));
 
-        Debug.Log($"Wave {currentWave} Difficulty - Interval: {currentSpawnInterval:F2}, " +
-                 $"Speed: {currentZombieSpeed:F2}, Health: {currentZombieHealth}");
+        if (isBossWave)
+        {
+            Debug.Log($"Wave {currentWave} is a BOSS wave! Regular zombies will have - " +
+                     $"Interval: {currentSpawnInterval:F2}, Speed: {currentZombieSpeed:F2}, Health: {currentZombieHealth}");
+        }
+        else
+        {
+            Debug.Log($"Wave {currentWave} Difficulty - Interval: {currentSpawnInterval:F2}, " +
+                     $"Speed: {currentZombieSpeed:F2}, Health: {currentZombieHealth}");
+        }
     }
 
     void InitializeLanes()
@@ -97,6 +124,13 @@ public class ZombieSpawner : MonoBehaviour
         if (!isSpawning)
         {
             isSpawning = true;
+
+            // If it's a boss wave, spawn the boss immediately
+            if (isBossWave && !hasBossSpawned)
+            {
+                SpawnBossZombie();
+            }
+
             spawnCoroutine = StartCoroutine(SpawnZombies());
             Debug.Log("ZombieSpawner: Spawning started");
         }
@@ -119,7 +153,6 @@ public class ZombieSpawner : MonoBehaviour
 
     public void DestroyAllZombies()
     {
-        // Find all zombies in the scene
         GameObject[] zombies = GameObject.FindGameObjectsWithTag("Zombie");
         foreach (GameObject zombie in zombies)
         {
@@ -138,13 +171,17 @@ public class ZombieSpawner : MonoBehaviour
         }
     }
 
+    private void OnZombieKilled()
+    {
+        if (waveManager != null)
+        {
+            waveManager.OnZombieKilled();
+        }
+    }
+
     void SpawnZombie()
     {
-        if (zombiePrefab == null)
-        {
-            Debug.LogError("ZombieSpawner: Cannot spawn zombie - prefab is null!");
-            return;
-        }
+        if (zombiePrefab == null) return;
 
         int randomLaneIndex = Random.Range(0, numberOfLanes);
         Vector3 spawnPosition = new Vector3(rightEdgeX, lanes[randomLaneIndex].position.y, 0);
@@ -152,6 +189,56 @@ public class ZombieSpawner : MonoBehaviour
         GameObject zombie = Instantiate(zombiePrefab, spawnPosition, Quaternion.Euler(180, 0, 180));
         zombie.tag = "Zombie";
 
+        // Always configure as normal zombie in regular spawn cycle
+        ConfigureNormalZombie(zombie);
+    }
+
+    void SpawnBossZombie()
+    {
+        if (zombiePrefab == null) return;
+
+        // Spawn boss in middle lane
+        int middleLaneIndex = numberOfLanes / 2;
+        Vector3 spawnPosition = new Vector3(rightEdgeX, lanes[middleLaneIndex].position.y, 0);
+
+        GameObject bossZombie = Instantiate(zombiePrefab, spawnPosition, Quaternion.Euler(180, 0, 180));
+        bossZombie.tag = "Zombie";
+        ConfigureBossZombie(bossZombie);
+
+        hasBossSpawned = true;
+        Debug.Log("Boss zombie spawned for this wave!");
+    }
+
+    private void ConfigureBossZombie(GameObject zombie)
+    {
+        // Scale up the boss
+        zombie.transform.localScale *= bossScale;
+
+        // Set up renderers with boss visuals
+        SpriteRenderer[] renderers = zombie.GetComponentsInChildren<SpriteRenderer>(true);
+        foreach (SpriteRenderer renderer in renderers)
+        {
+            renderer.sortingLayerName = zombieSortingLayerName;
+            renderer.sortingOrder = zombieOrderInLayer + 1;
+            renderer.color = bossColor;
+        }
+
+        // Set up boss movement
+        ZombieMovement zombieMovement = zombie.GetComponent<ZombieMovement>() ?? zombie.AddComponent<ZombieMovement>();
+        zombieMovement.speed = bossSpeed;
+        zombieMovement.leftEdgeX = leftEdgeX;
+
+        // Set up boss health
+        ZombieHealth zombieHealth = zombie.GetComponent<ZombieHealth>() ?? zombie.AddComponent<ZombieHealth>();
+        zombieHealth.SetMaxHealth(bossHealth);
+        zombieHealth.IsBoss = true;
+        zombieHealth.OnZombieDeath.AddListener(OnZombieKilled);
+
+        Debug.Log($"Spawned BOSS zombie with Health: {bossHealth}, Speed: {bossSpeed:F2}");
+    }
+
+    private void ConfigureNormalZombie(GameObject zombie)
+    {
         SpriteRenderer[] renderers = zombie.GetComponentsInChildren<SpriteRenderer>(true);
         foreach (SpriteRenderer renderer in renderers)
         {
@@ -164,30 +251,11 @@ public class ZombieSpawner : MonoBehaviour
         zombieMovement.leftEdgeX = leftEdgeX;
 
         ZombieHealth zombieHealth = zombie.GetComponent<ZombieHealth>() ?? zombie.AddComponent<ZombieHealth>();
-        zombieHealth.SetMaxHealth(currentZombieHealth); // Set the scaled health
+        zombieHealth.SetMaxHealth(currentZombieHealth);
+        zombieHealth.IsBoss = false;
         zombieHealth.OnZombieDeath.AddListener(OnZombieKilled);
 
-        Debug.Log($"Spawned zombie with Health: {currentZombieHealth}, Speed: {currentZombieSpeed:F2}");
-    }
-
-    private void OnZombieKilled()
-    {
-        if (waveManager != null)
-        {
-            waveManager.OnZombieKilled();
-        }
-    }
-
-    void OnValidate()
-    {
-        if (baseSpawnInterval < minimumSpawnInterval)
-            baseSpawnInterval = minimumSpawnInterval;
-
-        if (spawnIntervalDecrease < 0)
-            spawnIntervalDecrease = 0;
-
-        if (speedIncrease < 0)
-            speedIncrease = 0;
+        Debug.Log($"Spawned normal zombie with Health: {currentZombieHealth}, Speed: {currentZombieSpeed:F2}");
     }
 }
 

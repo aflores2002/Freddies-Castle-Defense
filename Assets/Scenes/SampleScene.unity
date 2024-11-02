@@ -275,8 +275,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e02a897869f2403f9a9bced726924d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseZombiesPerWave: 5
-  zombieIncreasePerWave: 5
+  baseZombiesPerWave: 1
+  zombieIncreasePerWave: 0
   healAmount: 10
   waveCounterText: {fileID: 1838357092}
   killCounterText: {fileID: 970167098}
@@ -988,7 +988,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519420028}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &519420031
 Camera:
   m_ObjectHideFlags: 0
@@ -1240,6 +1240,11 @@ MonoBehaviour:
   laneHeight: 1
   baseSpawnInterval: 4
   baseZombieSpeed: 1.5
+  bossWaveInterval: 3
+  bossScale: 2.5
+  bossHealth: 1000
+  bossSpeed: 0.5
+  bossColor: {r: 1, g: 0, b: 0, a: 1}
   spawnIntervalDecrease: 1
   speedIncrease: 0.5
   minimumSpawnInterval: 1
