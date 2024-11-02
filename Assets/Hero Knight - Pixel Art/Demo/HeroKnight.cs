@@ -28,13 +28,6 @@ public class HeroKnight : MonoBehaviour
     private float m_delayToIdle = 0.0f;
     private int m_upgradeLevel = 0;
 
-    // AudioManager audioManager;
-
-    // private void Awake()
-    // {
-    //     audioManager = GameObject.FindGameObjectWithTag("Audio").GetComponent<AudioManager>();
-    // }
-
     // Use this for initialization
     void Start()
     {
@@ -83,7 +76,7 @@ public class HeroKnight : MonoBehaviour
         }
 
         // Attack
-        else if(Input.GetMouseButtonDown(0) && m_timeSinceAttack > 0.25f)
+        else if(Input.GetMouseButtonDown(0) && m_timeSinceAttack > 0.25f && canAttack)
         {
             m_currentAttack++;
 
@@ -121,6 +114,20 @@ public class HeroKnight : MonoBehaviour
                 if(m_delayToIdle < 0)
                     m_animator.SetInteger("AnimState", 0);
         }
+    }
+
+    private bool canAttack = true;
+
+    public void EnableAttacking()
+    {
+        canAttack = true;
+        Debug.Log("HeroKnight: Attacking enabled");
+    }
+
+    public void DisableAttacking()
+    {
+        canAttack = false;
+        Debug.Log("HeroKnight: Attacking disabled");
     }
 
     void Attack()

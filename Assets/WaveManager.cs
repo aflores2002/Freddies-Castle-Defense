@@ -16,6 +16,7 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI waveCounterText;
     [SerializeField] private TextMeshProUGUI killCounterText;
     [SerializeField] private GameObject waveCompletePanel;
+    [SerializeField] private HeroKnight playerCharacter;
     [SerializeField] private Button upgradeDamageButton;
     [SerializeField] private Button healCastleButton;
     [SerializeField] private Button nextWaveButton;
@@ -33,16 +34,22 @@ public class WaveManager : MonoBehaviour
         zombieSpawner = FindObjectOfType<ZombieSpawner>();
         castleHealth = FindObjectOfType<CastleHealth>();
         heroKnight = FindObjectOfType<HeroKnight>();
+
+        // Assign playerCharacter if it's not already assigned in inspector
+        if (playerCharacter == null)
+        {
+            playerCharacter = heroKnight;
+            if (playerCharacter == null)
+            {
+                Debug.LogError("WaveManager: playerCharacter not found!");
+            }
+        }
+
         requiredKills = baseZombiesPerWave;
 
         if (castleHealth == null)
         {
             Debug.LogError("WaveManager: CastleHealth component not found in scene!");
-        }
-
-        if (heroKnight == null)
-        {
-            Debug.LogError("WaveManager: HeroKnight component not found in scene!");
         }
 
         // Setup UI
@@ -108,11 +115,21 @@ public class WaveManager : MonoBehaviour
         if (zombieSpawner != null)
         {
             zombieSpawner.StopSpawning();
-            zombieSpawner.DestroyAllZombies(); // Destroy remaining zombies
+            zombieSpawner.DestroyAllZombies();
         }
 
         UpdateButtonsText();
         waveCompletePanel.SetActive(true);
+
+        if (playerCharacter != null)
+        {
+            playerCharacter.DisableAttacking();
+            Debug.Log("Disabled player attacking");
+        }
+        else
+        {
+            Debug.LogError("WaveManager: playerCharacter is null in CompleteWave!");
+        }
     }
 
     private void UpdateKillCounter()
@@ -125,9 +142,19 @@ public class WaveManager : MonoBehaviour
         waveCounterText.text = $"Wave {currentWave}";
     }
 
-    private void StartNextWave()
+private void StartNextWave()
     {
         waveCompletePanel.SetActive(false);
+
+        if (playerCharacter != null)
+        {
+            playerCharacter.EnableAttacking();
+            Debug.Log("Enabled player attacking");
+        }
+        else
+        {
+            Debug.LogError("WaveManager: playerCharacter is null in StartNextWave!");
+        }
         currentWave++;
         UpdateWaveCounter();
 
