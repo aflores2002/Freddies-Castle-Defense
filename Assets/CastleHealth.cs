@@ -103,17 +103,23 @@ public class CastleHealth : MonoBehaviour
     {
         if (castleRenderer == null) return;
 
+        Vector3 currentPosition = transform.position;
+
         if (currentHealth > 50)
         {
             castleRenderer.sprite = castle_100;
+            transform.position = new Vector3(currentPosition.x, currentPosition.y, currentPosition.z);
         }
         else if (currentHealth > 0)
         {
             castleRenderer.sprite = castle_50;
+            transform.position = new Vector3(currentPosition.x, currentPosition.y, currentPosition.z);
         }
         else
         {
             castleRenderer.sprite = castle_0;
+            // Adjust Y position for Castle_0
+            transform.position = new Vector3(currentPosition.x, currentPosition.y - 1.55f, currentPosition.z);
         }
     }
 
