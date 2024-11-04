@@ -28,6 +28,8 @@ public class HeroKnight : MonoBehaviour
     private float m_delayToIdle = 0.0f;
     private int m_upgradeLevel = 0;
 
+    private readonly int m_IsRunning = Animator.StringToHash("IsRunning");
+
     // Use this for initialization
     void Start()
     {
@@ -98,23 +100,9 @@ public class HeroKnight : MonoBehaviour
             Attack();
         }
 
-        // Run
-        else if (movement.magnitude > Mathf.Epsilon)
-        {
-            // Reset timer
-            m_delayToIdle = 0.05f;
-            m_animator.SetInteger("AnimState", 1);
-        }
-
-        // Idle
-        else
-        {
-            // Prevents flickering transitions to idle
-            m_delayToIdle -= Time.deltaTime;
-                if(m_delayToIdle < 0)
-                    m_animator.SetInteger("AnimState", 0);
-        }
-    }
+        // Set running animation based on movement
+        bool isMoving = movement.magnitude > Mathf.Epsilon;
+        m_animator.SetBool(m_IsRunning, isMoving);    }
 
     private bool canAttack = true;
 
