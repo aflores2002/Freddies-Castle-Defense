@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UI; // Add this for UI components
+using UnityEngine.UI;
+using System.Collections;
 
 public class CastleHealth : MonoBehaviour
 {
@@ -9,6 +10,7 @@ public class CastleHealth : MonoBehaviour
 
     [Header("Castle Sprites")]
     [SerializeField] private SpriteRenderer castleRenderer;
+    [SerializeField] private Color originalColor;
     [SerializeField] private Sprite castle_100;
     [SerializeField] private Sprite castle_50;
     [SerializeField] private Sprite castle_0;
@@ -28,11 +30,32 @@ public class CastleHealth : MonoBehaviour
 
     public UnityEvent<HealthChangeData> OnHealthChanged = new UnityEvent<HealthChangeData>();
 
-    private void Start()
+    void Start()
     {
         currentHealth = maxHealth;
-        UpdateCastleAppearance();
-        UpdateHealthBar();
+        if (castleRenderer != null)
+        {
+            originalColor = castleRenderer.color;
+        }
+
+        // Setup castle collider
+        SetupCastleCollider();
+    }
+
+    private void SetupCastleCollider()
+    {
+        BoxCollider2D castleCollider = GetComponent<BoxCollider2D>();
+        if (castleCollider == null)
+        {
+            castleCollider = gameObject.AddComponent<BoxCollider2D>();
+        }
+
+        // Make sure it's NOT a trigger
+        castleCollider.isTrigger = false;
+
+        // Adjust the collider size to match your castle sprite
+        // You might need to adjust these values based on your sprite size
+        castleCollider.size = new Vector2(2f, 15f);
     }
 
     public void TakeDamage(int damage)
@@ -54,10 +77,23 @@ public class CastleHealth : MonoBehaviour
             IsHeal = false
         });
 
+        // Flash red when hit
+        if (castleRenderer != null)
+        {
+            StartCoroutine(FlashRed());
+        }
+
         if (currentHealth <= 0)
         {
             GameOver();
         }
+    }
+
+    private IEnumerator FlashRed()
+    {
+        castleRenderer.color = Color.red;
+        yield return new WaitForSeconds(0.1f);
+        castleRenderer.color = originalColor;
     }
 
     public void Heal(int amount)

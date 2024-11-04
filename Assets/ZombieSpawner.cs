@@ -263,30 +263,52 @@ public class ZombieMovement : MonoBehaviour
 {
     public float speed = 1f;
     public float leftEdgeX = -10f;
-        public int damageToCastle = 20; // Variable for configurable damage
+    public int damageToCastle = 20;
     private CastleHealth castleHealth;
+    private bool hasDamagedCastle = false;
 
     void Start()
     {
         castleHealth = FindObjectOfType<CastleHealth>();
+
+        // Setup colliders
+        SetupColliders();
+    }
+
+    private void SetupColliders()
+    {
+        // Add a BoxCollider2D for physical collisions if it doesn't exist
+        BoxCollider2D physicsCollider = GetComponent<BoxCollider2D>();
+        if (physicsCollider == null)
+        {
+            physicsCollider = gameObject.AddComponent<BoxCollider2D>();
+        }
+        physicsCollider.isTrigger = false; // Make sure it's not a trigger
+
+        // Add a second BoxCollider2D for trigger detection
+        BoxCollider2D triggerCollider = gameObject.AddComponent<BoxCollider2D>();
+        triggerCollider.isTrigger = true;
+        triggerCollider.size = physicsCollider.size * 1.1f; // Make trigger slightly larger
     }
 
     void Update()
     {
         // Move the zombie to the left
         transform.Translate(Vector3.right * speed * Time.deltaTime);
+    }
 
-        // Check if the zombie has reached the left edge of the screen
-        if (transform.position.x <= leftEdgeX)
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        // Handle collision with castle
+        if (!hasDamagedCastle && collision.gameObject.CompareTag("Castle"))
         {
-            // Damage the castle
             if (castleHealth != null)
             {
                 castleHealth.TakeDamage(damageToCastle);
+                hasDamagedCastle = true;
+                Debug.Log($"Zombie collided with castle! Dealing {damageToCastle} damage");
+                Destroy(gameObject);
             }
-
-            // Destroy the zombie
-            Destroy(gameObject);
         }
     }
 }
