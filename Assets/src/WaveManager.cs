@@ -16,8 +16,9 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI waveCounterText;
     [SerializeField] private TextMeshProUGUI killCounterText;
     [SerializeField] private GameObject waveCompletePanel;
-    [SerializeField] private GameObject startGamePanel;  // New panel
-    [SerializeField] private Button startGameButton;     // New button
+    [SerializeField] private GameObject startGamePanel;
+    [SerializeField] private Button startGameButton;
+    [SerializeField] private Button scaredButton;  // New button reference
     [SerializeField] private HeroKnight playerCharacter;
     [SerializeField] private Button upgradeDamageButton;
     [SerializeField] private Button healCastleButton;
@@ -32,9 +33,11 @@ public class WaveManager : MonoBehaviour
     private CastleHealth castleHealth;
     private HeroKnight heroKnight;
 
+    private const string SCARED_TEXT = "I'm Scared";
+    private const string TOO_BAD_TEXT = "Too Bad Start The Game";
+
     private void Start()
     {
-
         zombieSpawner = FindObjectOfType<ZombieSpawner>();
         castleHealth = FindObjectOfType<CastleHealth>();
         heroKnight = FindObjectOfType<HeroKnight>();
@@ -63,8 +66,43 @@ public class WaveManager : MonoBehaviour
         upgradeDamageButton.onClick.AddListener(OnUpgradeDamageClicked);
         healCastleButton.onClick.AddListener(OnHealCastleClicked);
         nextWaveButton.onClick.AddListener(OnNextWaveClicked);
-        startGameButton.onClick.AddListener(OnStartGameClicked);  // New listener
+        startGameButton.onClick.AddListener(OnStartGameClicked);
+        scaredButton.onClick.AddListener(OnScaredButtonClicked); // Add scared button listener
     }
+
+    private void OnScaredButtonClicked()
+{
+    if (scaredButton == null)
+    {
+        Debug.LogError("WaveManager: scaredButton is null!");
+        return;
+    }
+
+    // Find the TextMeshProUGUI component directly in children
+    TextMeshProUGUI[] allTextComponents = scaredButton.GetComponentsInChildren<TextMeshProUGUI>();
+    TextMeshProUGUI buttonText = null;
+
+    // Find the first TextMeshProUGUI component
+    foreach (TextMeshProUGUI textComponent in allTextComponents)
+    {
+        if (textComponent != null)
+        {
+            buttonText = textComponent;
+            break;
+        }
+    }
+
+    if (buttonText != null)
+    {
+        Debug.Log($"Current button text: {buttonText.text}"); // Debug log
+        buttonText.text = TOO_BAD_TEXT;
+        Debug.Log("Changed button text to: " + TOO_BAD_TEXT); // Debug log
+    }
+    else
+    {
+        Debug.LogError("WaveManager: No TextMeshProUGUI component found on scaredButton!");
+    }
+}
 
     private void SetupInitialGameState()
     {
