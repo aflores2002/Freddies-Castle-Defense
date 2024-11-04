@@ -263,12 +263,34 @@ public class ZombieMovement : MonoBehaviour
 {
     public float speed = 1f;
     public float leftEdgeX = -10f;
-        public int damageToCastle = 20; // Variable for configurable damage
+    public int damageToCastle = 20;
     private CastleHealth castleHealth;
+    private bool hasAttackedCastle = false;
+    private Rigidbody2D rb2d;
 
     void Start()
     {
         castleHealth = FindObjectOfType<CastleHealth>();
+
+        // Add Rigidbody2D if it doesn't exist
+        rb2d = GetComponent<Rigidbody2D>();
+        if (rb2d == null)
+        {
+            rb2d = gameObject.AddComponent<Rigidbody2D>();
+        }
+
+        // Configure Rigidbody2D for trigger detection
+        rb2d.isKinematic = true;
+        rb2d.gravityScale = 0;
+
+        // Ensure the capsule collider is properly configured
+        CapsuleCollider2D capsuleCollider = GetComponent<CapsuleCollider2D>();
+        if (capsuleCollider != null)
+        {
+            capsuleCollider.isTrigger = true;
+        }
+
+        Debug.Log($"Zombie initialized with collider: {GetComponent<Collider2D>() != null}");
     }
 
     void Update()
@@ -276,17 +298,32 @@ public class ZombieMovement : MonoBehaviour
         // Move the zombie to the left
         transform.Translate(Vector3.right * speed * Time.deltaTime);
 
-        // Check if the zombie has reached the left edge of the screen
-        if (transform.position.x <= leftEdgeX)
+        // Fallback position check
+        if (transform.position.x <= leftEdgeX && !hasAttackedCastle)
         {
-            // Damage the castle
+            if (castleHealth != null)
+            {
+                Debug.Log("Zombie reached leftEdgeX, damaging castle");
+                castleHealth.TakeDamage(damageToCastle);
+                hasAttackedCastle = true;
+                Destroy(gameObject);
+            }
+        }
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        Debug.Log($"Trigger detected with: {other.gameObject.name}, tag: {other.gameObject.tag}");
+
+        if (!hasAttackedCastle && other.CompareTag("Castle"))
+        {
+            Debug.Log("Castle collision detected!");
             if (castleHealth != null)
             {
                 castleHealth.TakeDamage(damageToCastle);
+                hasAttackedCastle = true;
+                Destroy(gameObject);
             }
-
-            // Destroy the zombie
-            Destroy(gameObject);
         }
     }
 }

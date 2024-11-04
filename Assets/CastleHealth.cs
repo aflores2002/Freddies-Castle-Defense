@@ -28,15 +28,39 @@ public class CastleHealth : MonoBehaviour
 
     public UnityEvent<HealthChangeData> OnHealthChanged = new UnityEvent<HealthChangeData>();
 
-    private void Start()
+    void Start()
     {
         currentHealth = maxHealth;
         UpdateCastleAppearance();
         UpdateHealthBar();
+
+        // Configure castle collider
+        BoxCollider2D castleCollider = GetComponent<BoxCollider2D>();
+        if (castleCollider != null)
+        {
+            castleCollider.isTrigger = true;
+            // Adjust the size and offset to match your castle sprite
+            castleCollider.size = new Vector2(2f, 15f); // Adjust these values
+            castleCollider.offset = new Vector2(-5.5f, -1.4f); // Adjust these values
+        }
+
+        // Add Rigidbody2D if it doesn't exist
+        Rigidbody2D rb = GetComponent<Rigidbody2D>();
+        if (rb == null)
+        {
+            rb = gameObject.AddComponent<Rigidbody2D>();
+        }
+        rb.isKinematic = true;
+        rb.gravityScale = 0;
+
+        gameObject.tag = "Castle";
+
+        Debug.Log($"Castle initialized with collider: {castleCollider != null}, tag: {gameObject.tag}");
     }
 
     public void TakeDamage(int damage)
     {
+        Debug.Log($"Castle taking {damage} damage");
         AudioManager.Instance.PlaySoundEffect("CastleDamage");
 
         int previousHealth = currentHealth;
