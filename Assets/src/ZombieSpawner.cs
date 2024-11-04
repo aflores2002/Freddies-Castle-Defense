@@ -1,4 +1,3 @@
-// ZombieSpawner.cs
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -44,6 +43,7 @@ public class ZombieSpawner : MonoBehaviour
     private int currentZombieHealth;
     private int currentWave = 1;
     private bool isBossWave = false;
+    private bool hasBossSpawned = false;
 
     void Start()
     {
@@ -58,9 +58,6 @@ public class ZombieSpawner : MonoBehaviour
         InitializeLanes();
         waveManager = FindObjectOfType<WaveManager>();
         ResetDifficultyToBase();
-        StartSpawning();
-
-        Debug.Log("ZombieSpawner: Initialization complete");
     }
 
     public void ResetDifficultyToBase()
@@ -74,8 +71,6 @@ public class ZombieSpawner : MonoBehaviour
 
         Debug.Log($"Reset to base difficulty - Interval: {currentSpawnInterval}, Speed: {currentZombieSpeed}, Health: {currentZombieHealth}");
     }
-
-    private bool hasBossSpawned = false; // New field to track if boss has spawned this wave
 
     public void IncreaseDifficulty(int waveNumber)
     {
@@ -139,14 +134,11 @@ public class ZombieSpawner : MonoBehaviour
     public void StopSpawning()
     {
         Debug.Log("ZombieSpawner: StopSpawning called");
-        if (isSpawning)
+        if (isSpawning && spawnCoroutine != null)
         {
             isSpawning = false;
-            if (spawnCoroutine != null)
-            {
-                StopCoroutine(spawnCoroutine);
-                spawnCoroutine = null;
-            }
+            StopCoroutine(spawnCoroutine);
+            spawnCoroutine = null;
             Debug.Log("ZombieSpawner: Spawning stopped");
         }
     }

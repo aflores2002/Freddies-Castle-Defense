@@ -16,6 +16,8 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI waveCounterText;
     [SerializeField] private TextMeshProUGUI killCounterText;
     [SerializeField] private GameObject waveCompletePanel;
+    [SerializeField] private GameObject startGamePanel;  // New panel
+    [SerializeField] private Button startGameButton;     // New button
     [SerializeField] private HeroKnight playerCharacter;
     [SerializeField] private Button upgradeDamageButton;
     [SerializeField] private Button healCastleButton;
@@ -25,14 +27,13 @@ public class WaveManager : MonoBehaviour
     private int currentKills = 0;
     private int requiredKills;
     private bool isWaveComplete = false;
+    private bool hasGameStarted = false;  // New flag
     private ZombieSpawner zombieSpawner;
     private CastleHealth castleHealth;
     private HeroKnight heroKnight;
 
     private void Start()
     {
-        // Play ZombieGrowl sound
-        AudioManager.Instance.PlaySoundEffect("ZombieGrowl");
 
         zombieSpawner = FindObjectOfType<ZombieSpawner>();
         castleHealth = FindObjectOfType<CastleHealth>();
@@ -55,16 +56,63 @@ public class WaveManager : MonoBehaviour
             Debug.LogError("WaveManager: CastleHealth component not found in scene!");
         }
 
-        // Setup UI
-        UpdateWaveCounter();
-        UpdateKillCounter();
-        UpdateButtonsText();
-        waveCompletePanel.SetActive(false);
+        // Setup initial UI state
+        SetupInitialGameState();
 
         // Add button listeners
         upgradeDamageButton.onClick.AddListener(OnUpgradeDamageClicked);
         healCastleButton.onClick.AddListener(OnHealCastleClicked);
         nextWaveButton.onClick.AddListener(OnNextWaveClicked);
+        startGameButton.onClick.AddListener(OnStartGameClicked);  // New listener
+    }
+
+    private void SetupInitialGameState()
+    {
+        // Setup UI
+        UpdateWaveCounter();
+        UpdateKillCounter();
+        UpdateButtonsText();
+
+        // Hide wave complete panel
+        waveCompletePanel.SetActive(false);
+
+        // Show start game panel
+        startGamePanel.SetActive(true);
+
+        // Disable player attacking until game starts
+        if (playerCharacter != null)
+        {
+            playerCharacter.DisableAttacking();
+        }
+
+        // Stop zombie spawner
+        if (zombieSpawner != null)
+        {
+            zombieSpawner.StopSpawning();
+        }
+    }
+
+    private void OnStartGameClicked()
+    {
+        // Play start game sound
+        AudioManager.Instance.PlaySoundEffect("ZombieGrowl");
+
+        // Hide start panel
+        startGamePanel.SetActive(false);
+
+        // Enable player attacking
+        if (playerCharacter != null)
+        {
+            playerCharacter.EnableAttacking();
+        }
+
+        // Start zombie spawning
+        if (zombieSpawner != null)
+        {
+            zombieSpawner.StartSpawning();
+        }
+
+        hasGameStarted = true;
     }
 
     private void UpdateButtonsText()
@@ -102,6 +150,8 @@ public class WaveManager : MonoBehaviour
 
     public void OnZombieKilled()
     {
+        if (!hasGameStarted) return;  // Ignore kills before game starts
+
         currentKills++;
         UpdateKillCounter();
 
@@ -145,7 +195,7 @@ public class WaveManager : MonoBehaviour
         waveCounterText.text = $"Wave {currentWave}";
     }
 
-private void StartNextWave()
+    private void StartNextWave()
     {
         // Play ZombieGrowl sound
         AudioManager.Instance.PlaySoundEffect("ZombieGrowl");
@@ -161,6 +211,7 @@ private void StartNextWave()
         {
             Debug.LogError("WaveManager: playerCharacter is null in StartNextWave!");
         }
+
         currentWave++;
         UpdateWaveCounter();
 
@@ -172,14 +223,14 @@ private void StartNextWave()
 
         if (zombieSpawner != null)
         {
-            zombieSpawner.IncreaseDifficulty(currentWave); // Pass the wave number
+            zombieSpawner.IncreaseDifficulty(currentWave);
             zombieSpawner.StartSpawning();
         }
     }
 
     private void OnUpgradeDamageClicked()
     {
-        // Play UpgradeDamage
+        // Play UpgradeDamage sound
         AudioManager.Instance.PlaySoundEffect("UpgradeDamage");
 
         if (heroKnight != null)
@@ -205,9 +256,8 @@ private void StartNextWave()
 
     private void OnNextWaveClicked()
     {
-        // Play AdvanceWave
+        // Play AdvanceWave sound
         AudioManager.Instance.PlaySoundEffect("AdvanceWave");
-
         StartNextWave();
     }
 }
