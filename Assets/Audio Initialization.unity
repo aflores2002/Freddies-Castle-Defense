@@ -391,7 +391,7 @@ MonoBehaviour:
   musicSource: {fileID: 2064306536}
   sfxSource: {fileID: 910381665}
   backgroundMusic: {fileID: 8300000, guid: d4aa9bb52c0841c4282f70a8fff6b86a, type: 3}
-  musicVolume: 0.06
+  musicVolume: 0
   soundEffects:
   - name: SwordSwing
     clip: {fileID: 8300000, guid: 323e15cfe809e114ab92c9f4b25e8bc2, type: 3}
@@ -420,6 +420,14 @@ MonoBehaviour:
   - name: AdvanceWave
     clip: {fileID: 8300000, guid: e58d8bd078f188a4ba314e933b98528b, type: 3}
     volume: 1
+    pitch: 1
+  - name: Step
+    clip: {fileID: 8300000, guid: df7087e4d8a8bb546bc08ce68632903f, type: 3}
+    volume: 0.5
+    pitch: 1
+  - name: ZombieGrowl
+    clip: {fileID: 8300000, guid: b43daa496608b4e809912f8a75f0b175, type: 3}
+    volume: 0.5
     pitch: 1
 --- !u!1 &2064306535
 GameObject:

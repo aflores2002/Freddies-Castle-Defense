@@ -31,6 +31,9 @@ public class WaveManager : MonoBehaviour
 
     private void Start()
     {
+        // Play ZombieGrowl sound
+        AudioManager.Instance.PlaySoundEffect("ZombieGrowl");
+
         zombieSpawner = FindObjectOfType<ZombieSpawner>();
         castleHealth = FindObjectOfType<CastleHealth>();
         heroKnight = FindObjectOfType<HeroKnight>();
@@ -144,6 +147,9 @@ public class WaveManager : MonoBehaviour
 
 private void StartNextWave()
     {
+        // Play ZombieGrowl sound
+        AudioManager.Instance.PlaySoundEffect("ZombieGrowl");
+
         waveCompletePanel.SetActive(false);
 
         if (playerCharacter != null)

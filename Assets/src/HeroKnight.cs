@@ -16,6 +16,10 @@ public class HeroKnight : MonoBehaviour
     [SerializeField] private int m_baseDamage = 50;
     [SerializeField] private int m_damageUpgradeAmount = 25;
 
+    [Header("Sound Settings")]
+    [SerializeField] private float stepRate = 0.05f; // Time between footsteps
+    private float lastStepTime;
+
     // Property to access current damage
     public int CurrentDamage { get; private set; }
 
@@ -28,19 +32,35 @@ public class HeroKnight : MonoBehaviour
     private float m_timeSinceAttack = 0.0f;
     private float m_delayToIdle = 0.0f;
     private int m_upgradeLevel = 0;
+    private bool canAttack = true;
 
     private readonly int m_IsRunning = Animator.StringToHash("IsRunning");
 
-    // Use this for initialization
     void Start()
     {
         m_animator = GetComponent<Animator>();
         m_body2d = GetComponent<Rigidbody2D>();
         m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_HeroKnight>();
         CurrentDamage = m_baseDamage;
+        lastStepTime = Time.time; // Initialize lastStepTime
 
         // Set gravity scale to 0 to allow free vertical movement
         m_body2d.gravityScale = 0f;
+    }
+
+    private void HandleFootsteps()
+    {
+        float timeSinceLastStep = Time.time - lastStepTime;
+
+        if (timeSinceLastStep >= stepRate)
+        {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySoundEffect("Step");
+                lastStepTime = Time.time;
+                Debug.Log($"Step played. Rate: {stepRate}, Time since last: {timeSinceLastStep:F3}");
+            }
+        }
     }
 
     // Update is called once per frame
@@ -59,6 +79,13 @@ public class HeroKnight : MonoBehaviour
         // Move
         m_body2d.velocity = movement * m_speed;
 
+        // Handle footstep sounds
+        bool isMoving = movement.magnitude > Mathf.Epsilon;
+        if (isMoving)
+        {
+            HandleFootsteps();
+        }
+
         // Swap direction of sprite depending on walk direction
         if (inputX > 0)
         {
@@ -70,6 +97,9 @@ public class HeroKnight : MonoBehaviour
             GetComponent<SpriteRenderer>().flipX = true;
             m_facingDirection = -1;
         }
+
+        // Set running animation based on movement
+        m_animator.SetBool(m_IsRunning, isMoving);
 
         // -- Handle Animations --
         // Death
@@ -100,12 +130,7 @@ public class HeroKnight : MonoBehaviour
             // Perform the attack
             Attack();
         }
-
-        // Set running animation based on movement
-        bool isMoving = movement.magnitude > Mathf.Epsilon;
-        m_animator.SetBool(m_IsRunning, isMoving);    }
-
-    private bool canAttack = true;
+    }
 
     public void EnableAttacking()
     {

@@ -72,26 +72,39 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // In AudioManager.cs
     public void PlaySoundEffect(string soundName)
     {
-        Debug.Log($"Attempting to play sound: {soundName}"); // Add this
-
         if (soundEffectDictionary.TryGetValue(soundName, out SoundEffect sound))
         {
-            Debug.Log($"Found sound effect: {soundName}"); // Add this
             sfxSource.pitch = sound.pitch;
             sfxSource.PlayOneShot(sound.clip, sound.volume);
         }
         else
         {
-            Debug.LogWarning($"Sound effect {soundName} not found in dictionary!"); // Modified this
-            // Print all available sound effects
-            Debug.Log("Available sound effects:");
-            foreach (var sfx in soundEffectDictionary.Keys)
-            {
-                Debug.Log(sfx);
-            }
+            Debug.LogWarning($"Sound effect {soundName} not found in dictionary!");
+        }
+    }
+
+    // New method for playing sound with variation
+    public void PlaySoundEffectWithVariation(string soundName, float pitchVariation, float volumeVariation = 1f)
+    {
+        if (soundEffectDictionary.TryGetValue(soundName, out SoundEffect sound))
+        {
+            // Store original pitch
+            float originalPitch = sfxSource.pitch;
+
+            // Apply variation
+            sfxSource.pitch = sound.pitch * pitchVariation;
+
+            // Play with volume variation
+            sfxSource.PlayOneShot(sound.clip, sound.volume * volumeVariation);
+
+            // Restore original pitch
+            sfxSource.pitch = originalPitch;
+        }
+        else
+        {
+            Debug.LogWarning($"Sound effect {soundName} not found in dictionary!");
         }
     }
 
