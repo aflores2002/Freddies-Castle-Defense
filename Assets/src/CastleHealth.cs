@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UI; // Add this for UI components
+using UnityEngine.UI;
+using System.Collections;
 
 public class CastleHealth : MonoBehaviour
 {
@@ -19,6 +20,13 @@ public class CastleHealth : MonoBehaviour
     [SerializeField] private Color damagedColor = Color.yellow;
     [SerializeField] private Color criticalColor = Color.red;
 
+    [Header("Visual Effects")]
+    [SerializeField] private float flashDuration = 0.2f;
+    [SerializeField] private Color damageFlashColor = Color.red;
+    [SerializeField] private Color healFlashColor = Color.green;
+    private Color originalColor;
+    private Coroutine flashCoroutine;
+
     public int MaximumHealth => maxHealth;
     public int CurrentHealth => currentHealth;
     public float CurrentHealthPercentage => (float)currentHealth / maxHealth * 100f;
@@ -31,6 +39,10 @@ public class CastleHealth : MonoBehaviour
     void Start()
     {
         currentHealth = maxHealth;
+        if (castleRenderer != null)
+        {
+            originalColor = castleRenderer.color;
+        }
         UpdateCastleAppearance();
         UpdateHealthBar();
 
@@ -39,9 +51,8 @@ public class CastleHealth : MonoBehaviour
         if (castleCollider != null)
         {
             castleCollider.isTrigger = true;
-            // Adjust the size and offset to match your castle sprite
-            castleCollider.size = new Vector2(2f, 15f); // Adjust these values
-            castleCollider.offset = new Vector2(-5.5f, -1.4f); // Adjust these values
+            castleCollider.size = new Vector2(2f, 15f);
+            castleCollider.offset = new Vector2(-5.5f, -1.4f);
         }
 
         // Add Rigidbody2D if it doesn't exist
@@ -54,8 +65,6 @@ public class CastleHealth : MonoBehaviour
         rb.gravityScale = 0;
 
         gameObject.tag = "Castle";
-
-        Debug.Log($"Castle initialized with collider: {castleCollider != null}, tag: {gameObject.tag}");
     }
 
     public void TakeDamage(int damage)
@@ -69,6 +78,7 @@ public class CastleHealth : MonoBehaviour
 
         UpdateCastleAppearance();
         UpdateHealthBar();
+        StartFlashEffect(damageFlashColor);
 
         OnHealthChanged.Invoke(new HealthChangeData
         {
@@ -88,11 +98,15 @@ public class CastleHealth : MonoBehaviour
     {
         if (amount <= 0) return;
 
+        Debug.Log($"Castle healing for {amount} health");
+        AudioManager.Instance?.PlaySoundEffect("CastleHeal");
+
         int previousHealth = currentHealth;
         currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
 
         UpdateCastleAppearance();
         UpdateHealthBar();
+        StartFlashEffect(healFlashColor);
 
         OnHealthChanged.Invoke(new HealthChangeData
         {
@@ -101,6 +115,33 @@ public class CastleHealth : MonoBehaviour
             HealthPercentage = CurrentHealthPercentage,
             IsHeal = true
         });
+    }
+
+    private void StartFlashEffect(Color flashColor)
+    {
+        if (castleRenderer == null) return;
+
+        // If there's an existing flash coroutine, stop it
+        if (flashCoroutine != null)
+        {
+            StopCoroutine(flashCoroutine);
+        }
+
+        flashCoroutine = StartCoroutine(FlashEffectCoroutine(flashColor));
+    }
+
+    private IEnumerator FlashEffectCoroutine(Color flashColor)
+    {
+        // Set the sprite color to the flash color
+        castleRenderer.color = flashColor;
+
+        // Wait for the specified duration
+        yield return new WaitForSeconds(flashDuration);
+
+        // Return to the original color
+        castleRenderer.color = originalColor;
+
+        flashCoroutine = null;
     }
 
     private void UpdateHealthBar()
@@ -114,7 +155,6 @@ public class CastleHealth : MonoBehaviour
         float fillAmount = (float)currentHealth / maxHealth;
         healthBarFill.fillAmount = fillAmount;
 
-        // Update health bar color based on health percentage
         if (fillAmount > 0.5f)
             healthBarFill.color = healthyColor;
         else if (fillAmount > 0.25f)
@@ -142,7 +182,6 @@ public class CastleHealth : MonoBehaviour
         else
         {
             castleRenderer.sprite = castle_0;
-            // Adjust Y position for Castle_0
             transform.position = new Vector3(currentPosition.x, currentPosition.y - 1.55f, currentPosition.z);
         }
     }

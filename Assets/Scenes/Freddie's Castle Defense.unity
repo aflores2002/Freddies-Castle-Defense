@@ -295,6 +295,9 @@ MonoBehaviour:
   healthyColor: {r: 1, g: 0, b: 0, a: 1}
   damagedColor: {r: 1, g: 0, b: 0, a: 1}
   criticalColor: {r: 1, g: 0, b: 0, a: 1}
+  flashDuration: 0.2
+  damageFlashColor: {r: 1, g: 0, b: 0, a: 1}
+  healFlashColor: {r: 0, g: 1, b: 0, a: 1}
   HasAnimationWhenHealthChanges: 0
   AnimationDuration: 0.1
   OnHealthChanged:
@@ -1361,7 +1364,7 @@ MonoBehaviour:
   numberOfLanes: 5
   laneHeight: 1
   baseSpawnInterval: 4
-  baseZombieSpeed: 1.5
+  baseZombieSpeed: 5
   bossWaveInterval: 3
   bossScale: 2.5
   bossHealth: 1000
