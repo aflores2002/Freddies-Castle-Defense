@@ -472,7 +472,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e02a897869f2403f9a9bced726924d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseZombiesPerWave: 2
+  baseZombiesPerWave: 1
   zombieIncreasePerWave: 0
   healAmount: 10
   waveCounterText: {fileID: 1838357092}
