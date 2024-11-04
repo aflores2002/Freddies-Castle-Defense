@@ -272,33 +272,38 @@ public class ZombieMovement : MonoBehaviour
     {
         castleHealth = FindObjectOfType<CastleHealth>();
 
-        // Add Rigidbody2D if it doesn't exist
+        // Set up Rigidbody2D
         rb2d = GetComponent<Rigidbody2D>();
         if (rb2d == null)
         {
             rb2d = gameObject.AddComponent<Rigidbody2D>();
         }
-
-        // Configure Rigidbody2D for trigger detection
         rb2d.isKinematic = true;
         rb2d.gravityScale = 0;
 
-        // Ensure the capsule collider is properly configured
-        CapsuleCollider2D capsuleCollider = GetComponent<CapsuleCollider2D>();
-        if (capsuleCollider != null)
+        // Get existing CapsuleCollider2D for knight collision
+        CapsuleCollider2D mainCollider = GetComponent<CapsuleCollider2D>();
+        if (mainCollider != null)
         {
-            capsuleCollider.isTrigger = true;
+            // Ensure this one is NOT a trigger
+            mainCollider.isTrigger = false;
         }
 
-        Debug.Log($"Zombie initialized with collider: {GetComponent<Collider2D>() != null}");
+        // Add a second BoxCollider2D for castle trigger detection
+        BoxCollider2D triggerCollider = gameObject.AddComponent<BoxCollider2D>();
+        triggerCollider.isTrigger = true;
+        // Make the trigger collider slightly smaller than the main collider
+        triggerCollider.size = new Vector2(0.5f, 1f); // Adjust size as needed
+        triggerCollider.offset = mainCollider != null ? mainCollider.offset : Vector2.zero;
+
+        Debug.Log("Zombie initialized with dual colliders");
     }
 
     void Update()
     {
-        // Move the zombie to the left
         transform.Translate(Vector3.right * speed * Time.deltaTime);
 
-        // Fallback position check
+        // Keep the fallback check just in case
         if (transform.position.x <= leftEdgeX && !hasAttackedCastle)
         {
             if (castleHealth != null)
@@ -313,8 +318,6 @@ public class ZombieMovement : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        Debug.Log($"Trigger detected with: {other.gameObject.name}, tag: {other.gameObject.tag}");
-
         if (!hasAttackedCastle && other.CompareTag("Castle"))
         {
             Debug.Log("Castle collision detected!");

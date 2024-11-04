@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class HeroKnight : MonoBehaviour
 {
@@ -129,17 +130,25 @@ public class HeroKnight : MonoBehaviour
         // Play sword swing sound
         AudioManager.Instance.PlaySoundEffect("SwordSwing");
 
-        // Detect enemies in range of attack
-        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(m_swordHitbox.position, m_attackRange, m_enemyLayers);
+        Debug.Log($"Attack initiated with damage: {CurrentDamage}");
 
-        // Damage them
-        foreach(Collider2D enemy in hitEnemies)
+        // Use a HashSet to track unique zombies hit
+        HashSet<GameObject> hitZombies = new HashSet<GameObject>();
+
+        Collider2D[] hitColliders = Physics2D.OverlapCircleAll(m_swordHitbox.position, m_attackRange, m_enemyLayers);
+        Debug.Log($"Found {hitColliders.Length} colliders in range");
+
+        foreach(Collider2D collider in hitColliders)
         {
-            ZombieHealth zombieHealth = enemy.GetComponent<ZombieHealth>();
-            if (zombieHealth != null)
+            // Only process each zombie GameObject once
+            if (hitZombies.Add(collider.gameObject))
             {
-                zombieHealth.TakeDamage(CurrentDamage);
-                Debug.Log($"Hit zombie with {CurrentDamage} damage!");
+                ZombieHealth zombieHealth = collider.gameObject.GetComponent<ZombieHealth>();
+                if (zombieHealth != null)
+                {
+                    zombieHealth.TakeDamage(CurrentDamage);
+                    Debug.Log($"Hit zombie with {CurrentDamage} damage!");
+                }
             }
         }
     }

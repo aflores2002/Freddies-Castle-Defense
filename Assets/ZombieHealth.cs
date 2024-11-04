@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using UnityEngine.Events;
 
 public class ZombieHealth : MonoBehaviour
@@ -11,26 +12,18 @@ public class ZombieHealth : MonoBehaviour
     private float lastHurtTime;
 
     public bool IsBoss { get; set; } = false;
-
     public UnityEvent OnZombieDeath = new UnityEvent();
-
-    // AudioManager audioManager;
-
-    // private void Awake()
-    // {
-    //     audioManager = GameObject.FindGameObjectsWithTag("Audio").GetComponent<AudioManager>();
-    // }
 
     void Start()
     {
-        animator = GetComponent<Animator>();
-        lastHurtTime = -hurtCooldown;
         currentHealth = maxHealth;
+        animator = GetComponent<Animator>();
+        lastHurtTime = -hurtCooldown;  // Allow immediate hurt on first hit
     }
 
-    public void SetMaxHealth(int newMaxHealth)
+    public void SetMaxHealth(int health)
     {
-        maxHealth = newMaxHealth;
+        maxHealth = health;
         currentHealth = maxHealth;
     }
 
@@ -67,7 +60,10 @@ public class ZombieHealth : MonoBehaviour
     void Hurt()
     {
         lastHurtTime = Time.time;
-        animator.SetTrigger("Hurt");
+        if (animator != null)
+        {
+            animator.SetTrigger("Hurt");
+        }
         Debug.Log("Hurt state triggered");
 
         // Disable the ZombieMovement script
@@ -96,17 +92,16 @@ public class ZombieHealth : MonoBehaviour
             AudioManager.Instance.PlaySoundEffect("ZombieDeath");
         }
 
-        Debug.Log("Death state triggered");
-        animator.SetTrigger("Death");
-
-        // Invoke the death event
-        OnZombieDeath.Invoke();
-
-        // Disable the zombie's collider
-        Collider2D zombieCollider = GetComponent<Collider2D>();
-        if (zombieCollider != null)
+        if (animator != null)
         {
-            zombieCollider.enabled = false;
+            animator.SetTrigger("Death");
+        }
+
+        // Disable the zombie's colliders
+        Collider2D[] zombieColliders = GetComponents<Collider2D>();
+        foreach (Collider2D collider in zombieColliders)
+        {
+            collider.enabled = false;
         }
 
         // Disable the ZombieMovement script
@@ -116,11 +111,20 @@ public class ZombieHealth : MonoBehaviour
             movement.enabled = false;
         }
 
-        // Get the length of the death animation
-        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-        float deathAnimationLength = stateInfo.length;
+        // Signal that this zombie has died
+        OnZombieDeath.Invoke();
 
-        // Destroy the zombie after the animation finishes
-        Destroy(gameObject, deathAnimationLength);
+        // Get the length of the death animation
+        if (animator != null)
+        {
+            AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+            float deathAnimationLength = stateInfo.length;
+            Destroy(gameObject, deathAnimationLength);
+        }
+        else
+        {
+            // If no animator, destroy after a default delay
+            Destroy(gameObject, 1f);
+        }
     }
 }
