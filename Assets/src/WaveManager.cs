@@ -70,8 +70,12 @@ public class WaveManager : MonoBehaviour
         // Initialize game state and UI
         SetupInitialGameState();
 
-        // Set up button click handlers
-        SetupButtonListeners();
+        // Add button listeners
+        upgradeDamageButton.onClick.AddListener(OnUpgradeDamageClicked);
+        healCastleButton.onClick.AddListener(OnHealCastleClicked);
+        nextWaveButton.onClick.AddListener(OnNextWaveClicked);
+        startGameButton.onClick.AddListener(OnStartGameClicked);
+        scaredButton.onClick.AddListener(OnScaredButtonClicked);
     }
 
     // Event handler for I'm Scared button
