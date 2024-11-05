@@ -6,14 +6,14 @@ using System.Collections.Generic;
 public class HeroKnight : MonoBehaviour
 {
     // Movement-related serialized fields
-    [SerializeField] float m_speed = 4.0f;         // Base movement speed for character
+    [SerializeField] float m_speed = 4.0f; // Base movement speed for character
 
     [Header("Combat Settings")]
-    [SerializeField] private Transform m_swordHitbox;          // Position for sword attack hitbox
-    [SerializeField] private float m_attackRange = 0.5f;       // Radius of attack circle
-    [SerializeField] private LayerMask m_enemyLayers;          // Layers to check for enemies during attacks
-    [SerializeField] private int m_baseDamage = 50;            // Starting damage value
-    [SerializeField] private int m_damageUpgradeAmount = 25;   // Amount damage increases per upgrade
+    [SerializeField] private Transform m_swordHitbox;        // Position for sword attack hitbox
+    [SerializeField] private float m_attackRange = 0.5f;     // Radius of attack circle
+    [SerializeField] private LayerMask m_enemyLayers;        // Layers to check for enemies during attacks
+    [SerializeField] private int m_baseDamage = 50;          // Starting damage value
+    [SerializeField] private int m_damageUpgradeAmount = 25; // Amount damage increases per upgrade
 
     [Header("Sound Settings")]
     [SerializeField] private float stepRate = 0.05f;   // Time between footstep sounds
@@ -23,14 +23,14 @@ public class HeroKnight : MonoBehaviour
     public int CurrentDamage { get; private set; }
 
     // Component references and state variables
-    private Animator m_animator;                  // Reference to the character's animator
-    private Rigidbody2D m_body2d;                 // Reference to the character's rigidbody
-    private Sensor_HeroKnight m_groundSensor;     // Reference to ground detection sensor
-    private int m_facingDirection = 1;            // 1 for right, -1 for left
-    private int m_currentAttack = 0;              // Tracks current attack in combo (1-3)
-    private float m_timeSinceAttack = 0.0f;       // Timer for attack combo system
-    private int m_upgradeLevel = 0;               // Tracks number of damage upgrades
-    private bool canAttack = true;                // Controls whether attacks are allowed
+    private Animator m_animator;              // Reference to the character's animator
+    private Rigidbody2D m_body2d;             // Reference to the character's rigidbody
+    private Sensor_HeroKnight m_groundSensor; // Reference to ground detection sensor
+    private int m_facingDirection = 1;        // 1 for right, -1 for left
+    private int m_currentAttack = 0;          // Tracks current attack in combo (1-3)
+    private float m_timeSinceAttack = 0.0f;   // Timer for attack combo system
+    private int m_upgradeLevel = 0;           // Tracks number of damage upgrades
+    private bool canAttack = true;            // Controls whether attacks are allowed
 
     // Cached animator parameter hash for better performance
     private readonly int m_IsRunning = Animator.StringToHash("IsRunning");

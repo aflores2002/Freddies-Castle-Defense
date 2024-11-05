@@ -20,6 +20,7 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private GameObject startGamePanel;       // Initial game start panel
     [SerializeField] private Button startGameButton;          // Button to begin the game
     [SerializeField] private Button scaredButton;             // "I'm Scared" button with changing text
+    [SerializeField] private Button stillScaredButton;        // "Still Scared" button
     [SerializeField] private HeroKnight playerCharacter;      // Reference to player character
     [SerializeField] private Button upgradeDamageButton;      // Button to upgrade attack damage
     [SerializeField] private Button healCastleButton;         // Button to heal castle
@@ -40,6 +41,8 @@ public class WaveManager : MonoBehaviour
     // Constants for scared button text
     private const string SCARED_TEXT = "I'm Scared";
     private const string TOO_BAD_TEXT = "Too Bad Start The Game";
+    private const string STILL_SCARED_TEXT = "Still Scared";
+    private const string TOO_BAD_DO_BETTER = "Too Bad Do Better";
 
     private void Start()
     {
@@ -76,6 +79,7 @@ public class WaveManager : MonoBehaviour
         nextWaveButton.onClick.AddListener(OnNextWaveClicked);
         startGameButton.onClick.AddListener(OnStartGameClicked);
         scaredButton.onClick.AddListener(OnScaredButtonClicked);
+        stillScaredButton.onClick.AddListener(OnStillScaredButtonClicked);
     }
 
     // Event handler for I'm Scared button
@@ -111,6 +115,41 @@ public class WaveManager : MonoBehaviour
         else
         {
             Debug.LogError("WaveManager: No TextMeshProUGUI component found on scaredButton!");
+        }
+    }
+
+    private void OnStillScaredButtonClicked()
+    {
+        if (stillScaredButton == null)
+        {
+            Debug.LogError("WaveManager: stillScaredButton is null!");
+            return;
+        }
+
+        // Find text component on button
+        TextMeshProUGUI[] allTextComponents = stillScaredButton.GetComponentsInChildren<TextMeshProUGUI>();
+        TextMeshProUGUI buttonText = null;
+
+        // Get first valid text component
+        foreach (TextMeshProUGUI textComponent in allTextComponents)
+        {
+            if (textComponent != null)
+            {
+                buttonText = textComponent;
+                break;
+            }
+        }
+
+        // Update button text
+        if (buttonText != null)
+        {
+            Debug.Log($"Current still scared button text: {buttonText.text}");
+            buttonText.text = TOO_BAD_DO_BETTER;
+            Debug.Log("Changed still scared button text to: " + TOO_BAD_DO_BETTER);
+        }
+        else
+        {
+            Debug.LogError("WaveManager: No TextMeshProUGUI component found on stillScaredButton!");
         }
     }
 
@@ -310,5 +349,54 @@ public class WaveManager : MonoBehaviour
     {
         AudioManager.Instance.PlaySoundEffect("AdvanceWave");
         StartNextWave();
+    }
+
+    // Handle game over state
+    public void HandleGameOver()
+    {
+        // Stop zombie spawning
+        if (zombieSpawner != null)
+        {
+            zombieSpawner.StopSpawning();
+            zombieSpawner.DestroyAllZombies();
+        }
+
+        // Disable player attacks
+        if (playerCharacter != null)
+        {
+            playerCharacter.DisableAttacking();
+        }
+
+        // Hide wave complete panel if it's showing
+        if (waveCompletePanel != null)
+        {
+            waveCompletePanel.SetActive(false);
+        }
+
+        hasGameStarted = false;
+    }
+
+    // Start a new game
+    public void StartNewGame()
+    {
+        // Reset wave counter
+        currentWave = 1;
+        currentKills = 0;
+        isWaveComplete = false;
+        requiredKills = baseZombiesPerWave;
+
+        // Reset UI
+        UpdateWaveCounter();
+        UpdateKillCounter();
+        UpdateButtonsText();
+
+        // Reset zombie spawner
+        if (zombieSpawner != null)
+        {
+            zombieSpawner.ResetDifficultyToBase();
+        }
+
+        // Start the game just like the start game button
+        OnStartGameClicked();
     }
 }

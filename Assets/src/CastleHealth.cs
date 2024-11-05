@@ -29,6 +29,12 @@ public class CastleHealth : MonoBehaviour
     private Color originalColor;                                 // Store original sprite color
     private Coroutine flashCoroutine;                            // Reference to active flash effect
 
+    [Header("Game Over")]
+    [SerializeField] private GameObject gameOverPanel; // Panel shown when castle is destroyed
+    [SerializeField] private Button startOverButton;   // Button to restart the game
+    private WaveManager waveManager;                   // Reference to wave manager
+    private Vector3 originalPosition;                  // Store the castle's starting position
+
     // Public properties for external access
     public int MaximumHealth => maxHealth;
     public int CurrentHealth => currentHealth;
@@ -43,12 +49,25 @@ public class CastleHealth : MonoBehaviour
 
     void Start()
     {
+        // Store original position
+        originalPosition = transform.position;
+
         // Initialize health and colors
         currentHealth = maxHealth;
         if (castleRenderer != null)
         {
             originalColor = castleRenderer.color;
         }
+
+        // Get WaveManager reference
+        waveManager = FindObjectOfType<WaveManager>();
+
+        // Setup start over button
+        if (startOverButton != null)
+        {
+            startOverButton.onClick.AddListener(OnStartOverClicked);
+        }
+
         UpdateCastleAppearance();
         UpdateHealthBar();
 
@@ -71,6 +90,12 @@ public class CastleHealth : MonoBehaviour
         rb.gravityScale = 0;       // Disable gravity
 
         gameObject.tag = "Castle"; // Set tag for collision detection
+
+        // Ensure game over panel starts hidden
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(false);
+        }
     }
 
     // Handle taking damage
@@ -188,24 +213,22 @@ public class CastleHealth : MonoBehaviour
     {
         if (castleRenderer == null) return;
 
-        Vector3 currentPosition = transform.position;
-
-        // Change sprite and position based on health level
+        // Change sprite based on health level
         if (currentHealth > 50)
         {
             castleRenderer.sprite = castle_100;
-            transform.position = new Vector3(currentPosition.x, currentPosition.y, currentPosition.z);
+            transform.position = originalPosition;
         }
         else if (currentHealth > 0)
         {
             castleRenderer.sprite = castle_50;
-            transform.position = new Vector3(currentPosition.x, currentPosition.y, currentPosition.z);
+            transform.position = originalPosition;
         }
         else
         {
             castleRenderer.sprite = castle_0;
             // Adjust position down for destroyed state
-            transform.position = new Vector3(currentPosition.x, currentPosition.y - 1.55f, currentPosition.z);
+            transform.position = new Vector3(originalPosition.x, originalPosition.y - 1.55f, originalPosition.z);
         }
     }
 
@@ -213,6 +236,43 @@ public class CastleHealth : MonoBehaviour
     private void GameOver()
     {
         Debug.Log("Game Over! Castle has been destroyed.");
+
+        // Show game over panel
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+        }
+
+        // Stop and clear zombies through wave manager
+        if (waveManager != null)
+        {
+            waveManager.HandleGameOver();
+        }
+        else
+        {
+            Debug.LogError("WaveManager reference not found in CastleHealth!");
+        }
+    }
+
+    // Handle start over button click
+    private void OnStartOverClicked()
+    {
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(false);
+        }
+
+        // Reset castle health and position
+        currentHealth = maxHealth;
+        transform.position = originalPosition; // Reset position
+        UpdateCastleAppearance();
+        UpdateHealthBar();
+
+        // Restart game through wave manager
+        if (waveManager != null)
+        {
+            waveManager.StartNewGame();
+        }
     }
 }
 
