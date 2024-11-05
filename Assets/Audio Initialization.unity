@@ -395,7 +395,7 @@ MonoBehaviour:
   soundEffects:
   - name: SwordSwing
     clip: {fileID: 8300000, guid: 323e15cfe809e114ab92c9f4b25e8bc2, type: 3}
-    volume: 0.25
+    volume: 0.2
     pitch: 1
   - name: ZombieDeath
     clip: {fileID: 8300000, guid: 2b21ef916f6943c439b71a7c74568878, type: 3}
@@ -427,7 +427,7 @@ MonoBehaviour:
     pitch: 1
   - name: ZombieGrowl
     clip: {fileID: 8300000, guid: b43daa496608b4e809912f8a75f0b175, type: 3}
-    volume: 0.5
+    volume: 0.1
     pitch: 1
 --- !u!1 &2064306535
 GameObject:

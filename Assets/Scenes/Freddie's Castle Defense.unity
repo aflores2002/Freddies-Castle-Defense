@@ -2404,8 +2404,11 @@ MonoBehaviour:
   healthIncreasePerWave: 20
   rightEdgeX: 10
   leftEdgeX: -10
-  zombieSortingLayerName: Enemy
   zombieOrderInLayer: 101
+  zombieSortingLayerName: Enemy
+  baseTopLaneSortingOrder: 200
+  sortingOrderPerLaneDecrease: 20
+  bossExtraSortingOrder: 10
 --- !u!4 &657334438
 Transform:
   m_ObjectHideFlags: 0
@@ -3353,7 +3356,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8459761256327841954, guid: 8d33425d7a2a5394ba6dc22e7de6306c, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -7.23
+      value: -7.68
       objectReference: {fileID: 0}
     - target: {fileID: 8459761256327841954, guid: 8d33425d7a2a5394ba6dc22e7de6306c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

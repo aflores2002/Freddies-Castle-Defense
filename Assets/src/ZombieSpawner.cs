@@ -31,8 +31,7 @@ public class ZombieSpawner : MonoBehaviour
     [SerializeField] private float leftEdgeX = -10f; // Castle position
 
     [Header("Visual Settings")]
-    [SerializeField] private string zombieSortingLayerName = "Zombies"; // Sorting layer name
-    [SerializeField] private int zombieOrderInLayer = 101;              // Base sorting order
+    [SerializeField] private int zombieOrderInLayer = 101; // Base sorting order
 
     // Internal state tracking
     private List<Transform> lanes;    // List of lane positions
@@ -47,6 +46,20 @@ public class ZombieSpawner : MonoBehaviour
     private int currentWave = 1;         // Current wave number
     private bool isBossWave = false;     // Whether current wave is a boss wave
     private bool hasBossSpawned = false; // Whether boss has spawned this wave
+
+    // Additional sorting order settings
+    [Header("Sorting Settings")]
+    [SerializeField] private string zombieSortingLayerName = "Zombies";
+    // Base sorting order for zombies in the top lane
+    [SerializeField] private int baseTopLaneSortingOrder = 200;
+    // Amount to decrease sorting order per lane (lower lanes appear behind higher lanes)
+    [SerializeField] private int sortingOrderPerLaneDecrease = 20;
+    // Additional sorting boost for boss zombie
+    [SerializeField] private int bossExtraSortingOrder = 10;
+
+    // Track boss state
+    private bool hasBossActive = false;
+    private GameObject currentBossZombie;
 
     void Start()
     {
@@ -82,7 +95,9 @@ public class ZombieSpawner : MonoBehaviour
     public void IncreaseDifficulty(int waveNumber)
     {
         currentWave = waveNumber;
-        hasBossSpawned = false; // Reset boss spawn flag
+        hasBossSpawned = false;
+        hasBossActive = false;
+        currentBossZombie = null;
 
         // Determine if this is a boss wave
         isBossWave = (currentWave % bossWaveInterval == 0);
@@ -162,7 +177,9 @@ public class ZombieSpawner : MonoBehaviour
         {
             Destroy(zombie);
         }
-        Debug.Log($"Destroyed {zombies.Length} zombies");
+        hasBossActive = false;
+        currentBossZombie = null;
+        Debug.Log($"Destroyed {zombies.Length} zombies and reset boss state");
     }
 
     // Coroutine for spawning zombies at intervals
@@ -190,14 +207,23 @@ public class ZombieSpawner : MonoBehaviour
     {
         if (zombiePrefab == null) return;
 
-        // Choose random lane
-        int randomLaneIndex = Random.Range(0, numberOfLanes);
+        // If boss exists, only use lanes below it
+        int startLane = hasBossActive ? 1 : 0; // Skip top lane if boss exists
+
+        if (startLane >= numberOfLanes)
+        {
+            Debug.LogWarning("No available lanes for zombie spawn");
+            return;
+        }
+
+        // Choose random lane from available lanes
+        int randomLaneIndex = Random.Range(startLane, numberOfLanes);
         Vector3 spawnPosition = new Vector3(rightEdgeX, lanes[randomLaneIndex].position.y, 0);
 
         // Create and configure zombie
         GameObject zombie = Instantiate(zombiePrefab, spawnPosition, Quaternion.Euler(180, 0, 180));
         zombie.tag = "Zombie";
-        ConfigureNormalZombie(zombie);
+        ConfigureNormalZombie(zombie, randomLaneIndex);
     }
 
     // Spawn boss zombie
@@ -205,17 +231,18 @@ public class ZombieSpawner : MonoBehaviour
     {
         if (zombiePrefab == null) return;
 
-        // Spawn in middle lane
-        int middleLaneIndex = numberOfLanes / 2;
-        Vector3 spawnPosition = new Vector3(rightEdgeX, lanes[middleLaneIndex].position.y, 0);
+        // Always spawn boss in top lane (index 0)
+        Vector3 spawnPosition = new Vector3(rightEdgeX, lanes[0].position.y, 0);
 
         // Create and configure boss
         GameObject bossZombie = Instantiate(zombiePrefab, spawnPosition, Quaternion.Euler(180, 0, 180));
         bossZombie.tag = "Zombie";
         ConfigureBossZombie(bossZombie);
 
+        hasBossActive = true;
+        currentBossZombie = bossZombie;
         hasBossSpawned = true;
-        Debug.Log("Boss zombie spawned for this wave!");
+        Debug.Log("Boss zombie spawned in top lane");
     }
 
     // Configure boss zombie properties
@@ -224,12 +251,15 @@ public class ZombieSpawner : MonoBehaviour
         // Scale up the boss
         zombie.transform.localScale *= bossScale;
 
+        // Calculate boss sorting order (top lane + extra boost)
+        int bossSortingOrder = baseTopLaneSortingOrder + bossExtraSortingOrder;
+
         // Set up visual properties
         SpriteRenderer[] renderers = zombie.GetComponentsInChildren<SpriteRenderer>(true);
         foreach (SpriteRenderer renderer in renderers)
         {
             renderer.sortingLayerName = zombieSortingLayerName;
-            renderer.sortingOrder = zombieOrderInLayer + 1;
+            renderer.sortingOrder = bossSortingOrder;
             renderer.color = bossColor;
         }
 
@@ -238,24 +268,31 @@ public class ZombieSpawner : MonoBehaviour
         zombieMovement.speed = bossSpeed;
         zombieMovement.leftEdgeX = leftEdgeX;
 
-        // Configure health
+        // Configure health with boss death handler
         ZombieHealth zombieHealth = zombie.GetComponent<ZombieHealth>() ?? zombie.AddComponent<ZombieHealth>();
         zombieHealth.SetMaxHealth(bossHealth);
         zombieHealth.IsBoss = true;
+
+        // Add listener for boss death
+        zombieHealth.OnZombieDeath.AddListener(() => OnBossZombieKilled(zombie));
         zombieHealth.OnZombieDeath.AddListener(OnZombieKilled);
 
-        Debug.Log($"Spawned BOSS zombie with Health: {bossHealth}, Speed: {bossSpeed:F2}");
+        Debug.Log($"Spawned BOSS zombie with Health: {bossHealth}, Speed: {bossSpeed:F2}, SortingOrder: {bossSortingOrder}");
     }
 
     // Configure normal zombie properties
-    private void ConfigureNormalZombie(GameObject zombie)
+    private void ConfigureNormalZombie(GameObject zombie, int laneIndex)
     {
+        // Calculate sorting order based on lane
+        // Lower lanes get lower sorting order (appear behind higher lanes)
+        int zombieSortingOrder = baseTopLaneSortingOrder - (laneIndex * sortingOrderPerLaneDecrease);
+
         // Set up visual properties
         SpriteRenderer[] renderers = zombie.GetComponentsInChildren<SpriteRenderer>(true);
         foreach (SpriteRenderer renderer in renderers)
         {
             renderer.sortingLayerName = zombieSortingLayerName;
-            renderer.sortingOrder = zombieOrderInLayer;
+            renderer.sortingOrder = zombieSortingOrder;
         }
 
         // Configure movement
@@ -269,7 +306,16 @@ public class ZombieSpawner : MonoBehaviour
         zombieHealth.IsBoss = false;
         zombieHealth.OnZombieDeath.AddListener(OnZombieKilled);
 
-        Debug.Log($"Spawned normal zombie with Health: {currentZombieHealth}, Speed: {currentZombieSpeed:F2}");
+        Debug.Log($"Spawned normal zombie in lane {laneIndex} with Health: {currentZombieHealth}, " +
+                 $"Speed: {currentZombieSpeed:F2}, SortingOrder: {zombieSortingOrder}");
+    }
+
+    // Method to handle boss death and free up lane
+    private void OnBossZombieKilled(GameObject bossZombie)
+    {
+        hasBossActive = false;
+        currentBossZombie = null;
+        Debug.Log("Boss killed, all lanes now available");
     }
 }
 
