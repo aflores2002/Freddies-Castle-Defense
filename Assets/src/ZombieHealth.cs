@@ -2,51 +2,55 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.Events;
 
+// ZombieHealth manages the health system, damage handling, and death behavior for zombies
 public class ZombieHealth : MonoBehaviour
 {
-    [SerializeField] private int maxHealth = 100;
-    private int currentHealth;
-    private Animator animator;
-    private bool isDead = false;
-    private float hurtCooldown = 0.5f;
-    private float lastHurtTime;
+    [SerializeField] private int maxHealth = 100; // Max health
+    private int currentHealth;                    // Current health value
+    private Animator animator;                    // Reference to zombie's animator
+    private bool isDead = false;                  // Track if zombie is dead
+    private float hurtCooldown = 0.5f;            // Time required between hurt states
+    private float lastHurtTime;                   // Time of last hurt state
 
-    public bool IsBoss { get; set; } = false;
-    public UnityEvent OnZombieDeath = new UnityEvent();
+    // Properties for boss status and death event
+    public bool IsBoss { get; set; } = false;           // Whether this is a boss zombie
+    public UnityEvent OnZombieDeath = new UnityEvent(); // Event fired when zombie dies
 
     void Start()
     {
+        // Initialize health and components
         currentHealth = maxHealth;
         animator = GetComponent<Animator>();
-        lastHurtTime = -hurtCooldown;  // Allow immediate hurt on first hit
+        lastHurtTime = -hurtCooldown; // Set negative cooldown to allow immediate first hit
     }
 
+    // Set max and current health
     public void SetMaxHealth(int health)
     {
         maxHealth = health;
         currentHealth = maxHealth;
     }
 
+    // Handle damage taken by the zombie
     public void TakeDamage(int damage)
     {
+        // Prevent damage to dead zombies
         if (isDead) return;
 
+        // Apply damage
         currentHealth -= damage;
 
-        // Different debug messages for boss and normal zombies
+        // Log different messages for boss and regular zombies
         if (IsBoss)
         {
-            // AudioManager.Instance?.PlaySound("BossHit");
-
             Debug.Log($"BOSS took {damage} damage. Current health: {currentHealth}/{maxHealth}");
         }
         else
         {
-            // AudioManager.Instance?.PlaySound("ZombieHit");
-
             Debug.Log($"Zombie took {damage} damage. Current health: {currentHealth}/{maxHealth}");
         }
 
+        // Check for death or hurt state
         if (currentHealth <= 0)
         {
             Die();
@@ -57,16 +61,20 @@ public class ZombieHealth : MonoBehaviour
         }
     }
 
+    // Handle hurt state
     void Hurt()
     {
+        // Update last hurt time
         lastHurtTime = Time.time;
+
+        // Trigger hurt animation if animator exists
         if (animator != null)
         {
             animator.SetTrigger("Hurt");
         }
         Debug.Log("Hurt state triggered");
 
-        // Disable the ZombieMovement script
+        // Disable movement during hurt state
         ZombieMovement movement = GetComponent<ZombieMovement>();
         if (movement != null)
         {
@@ -75,55 +83,58 @@ public class ZombieHealth : MonoBehaviour
         }
     }
 
+    // Handle death state
     void Die()
     {
+        // Prevent multiple death calls
         if (isDead) return;
 
         isDead = true;
 
+        // Play appropriate death sound based on zombie type
         if (IsBoss)
         {
-            // Play boss death sound
             AudioManager.Instance.PlaySoundEffect("BossDeath");
         }
         else
         {
-            // Play zombie death sound
             AudioManager.Instance.PlaySoundEffect("ZombieDeath");
         }
 
+        // Trigger death animation if animator exists
         if (animator != null)
         {
             animator.SetTrigger("Death");
         }
 
-        // Disable the zombie's colliders
+        // Disable all colliders on death
         Collider2D[] zombieColliders = GetComponents<Collider2D>();
         foreach (Collider2D collider in zombieColliders)
         {
             collider.enabled = false;
         }
 
-        // Disable the ZombieMovement script
+        // Disable movement on death
         ZombieMovement movement = GetComponent<ZombieMovement>();
         if (movement != null)
         {
             movement.enabled = false;
         }
 
-        // Signal that this zombie has died
+        // Notify listeners that zombie has died
         OnZombieDeath.Invoke();
 
-        // Get the length of the death animation
+        // Schedule zombie destruction after death animation
         if (animator != null)
         {
+            // Get death animation length for timed destruction
             AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
             float deathAnimationLength = stateInfo.length;
             Destroy(gameObject, deathAnimationLength);
         }
         else
         {
-            // If no animator, destroy after a default delay
+            // Use default destruction delay if no animator
             Destroy(gameObject, 1f);
         }
     }
