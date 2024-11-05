@@ -2,64 +2,70 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+// ZombieSpawner manages zombie spawning, wave difficulty, and boss encounters
 public class ZombieSpawner : MonoBehaviour
 {
     [Header("Spawn Settings")]
-    [SerializeField] private GameObject zombiePrefab;
-    [SerializeField] private int numberOfLanes = 5;
-    [SerializeField] private float laneHeight = 1f;
-    [SerializeField] private float baseSpawnInterval = 5f;
-    [SerializeField] private float baseZombieSpeed = 1f;
+    [SerializeField] private GameObject zombiePrefab;      // Prefab for spawning zombies
+    [SerializeField] private int numberOfLanes = 5;        // Number of vertical lanes
+    [SerializeField] private float laneHeight = 1f;        // Vertical spacing between lanes
+    [SerializeField] private float baseSpawnInterval = 5f; // Starting time between spawns
+    [SerializeField] private float baseZombieSpeed = 1f;   // Starting zombie movement speed
 
     [Header("Boss Settings")]
-    [SerializeField] private int bossWaveInterval = 3;
-    [SerializeField] private float bossScale = 2.5f;
-    [SerializeField] private int bossHealth = 1000;
-    [SerializeField] private float bossSpeed = 0.5f;
-    [SerializeField] private Color bossColor = Color.red;
+    [SerializeField] private int bossWaveInterval = 3;    // Waves between boss spawns
+    [SerializeField] private float bossScale = 2.5f;      // Size multiplier for boss
+    [SerializeField] private int bossHealth = 1000;       // Boss health points
+    [SerializeField] private float bossSpeed = 0.5f;      // Boss movement speed
+    [SerializeField] private Color bossColor = Color.red; // Boss tint color
 
     [Header("Difficulty Settings")]
-    [SerializeField] private float spawnIntervalDecrease = 0.5f;
-    [SerializeField] private float speedIncrease = 0.1f;
-    [SerializeField] private float minimumSpawnInterval = 1f;
-    [SerializeField] private int baseZombieHealth = 100;
-    [SerializeField] private int healthIncreasePerWave = 20;
+    [SerializeField] private float spawnIntervalDecrease = 0.5f; // Spawn speed increase per wave
+    [SerializeField] private float speedIncrease = 0.1f;         // Movement speed increase per wave
+    [SerializeField] private float minimumSpawnInterval = 1f;    // Max spawn rate
+    [SerializeField] private int baseZombieHealth = 100;         // Starting zombie health
+    [SerializeField] private int healthIncreasePerWave = 20;     // Health increased per wave
 
     [Header("Position Settings")]
-    [SerializeField] private float rightEdgeX = 10f;
-    [SerializeField] private float leftEdgeX = -10f;
+    [SerializeField] private float rightEdgeX = 10f; // Spawn position
+    [SerializeField] private float leftEdgeX = -10f; // Castle position
 
     [Header("Visual Settings")]
-    [SerializeField] private string zombieSortingLayerName = "Zombies";
-    [SerializeField] private int zombieOrderInLayer = 101;
+    [SerializeField] private string zombieSortingLayerName = "Zombies"; // Sorting layer name
+    [SerializeField] private int zombieOrderInLayer = 101;              // Base sorting order
 
-    private List<Transform> lanes;
-    private bool isSpawning = false;
-    private Coroutine spawnCoroutine;
-    private WaveManager waveManager;
+    // Internal state tracking
+    private List<Transform> lanes;    // List of lane positions
+    private bool isSpawning = false;  // Current spawning state
+    private Coroutine spawnCoroutine; // Reference to spawn coroutine
+    private WaveManager waveManager;  // Reference to wave manager
 
-    private float currentSpawnInterval;
-    private float currentZombieSpeed;
-    private int currentZombieHealth;
-    private int currentWave = 1;
-    private bool isBossWave = false;
-    private bool hasBossSpawned = false;
+    // Current wave properties
+    private float currentSpawnInterval;  // Current time between spawns
+    private float currentZombieSpeed;    // Current zombie speed
+    private int currentZombieHealth;     // Current zombie health
+    private int currentWave = 1;         // Current wave number
+    private bool isBossWave = false;     // Whether current wave is a boss wave
+    private bool hasBossSpawned = false; // Whether boss has spawned this wave
 
     void Start()
     {
         Debug.Log("ZombieSpawner: Starting initialization");
 
+        // Validate required prefab
         if (zombiePrefab == null)
         {
             Debug.LogError("ZombieSpawner: Zombie prefab is not assigned!");
             return;
         }
 
+        // Initialize systems
         InitializeLanes();
         waveManager = FindObjectOfType<WaveManager>();
         ResetDifficultyToBase();
     }
 
+    // Reset all difficulty parameters to starting values
     public void ResetDifficultyToBase()
     {
         currentSpawnInterval = baseSpawnInterval;
@@ -72,19 +78,21 @@ public class ZombieSpawner : MonoBehaviour
         Debug.Log($"Reset to base difficulty - Interval: {currentSpawnInterval}, Speed: {currentZombieSpeed}, Health: {currentZombieHealth}");
     }
 
+    // Increase difficulty for new wave
     public void IncreaseDifficulty(int waveNumber)
     {
         currentWave = waveNumber;
-        hasBossSpawned = false; // Reset boss spawn flag for new wave
+        hasBossSpawned = false; // Reset boss spawn flag
 
-        // Check if this is a boss wave
+        // Determine if this is a boss wave
         isBossWave = (currentWave % bossWaveInterval == 0);
 
-        // Normal wave difficulty progression (applies to all waves)
+        // Update difficulty parameters
         currentSpawnInterval = Mathf.Max(minimumSpawnInterval, currentSpawnInterval - spawnIntervalDecrease);
         currentZombieSpeed += speedIncrease;
         currentZombieHealth = baseZombieHealth + (healthIncreasePerWave * (currentWave - 1));
 
+        // Log appropriate message
         if (isBossWave)
         {
             Debug.Log($"Wave {currentWave} is a BOSS wave! Regular zombies will have - " +
@@ -97,6 +105,7 @@ public class ZombieSpawner : MonoBehaviour
         }
     }
 
+    // Create and position lanes for zombie paths
     void InitializeLanes()
     {
         Debug.Log("ZombieSpawner: Initializing lanes");
@@ -113,6 +122,7 @@ public class ZombieSpawner : MonoBehaviour
         Debug.Log($"ZombieSpawner: Created {numberOfLanes} lanes");
     }
 
+    // Begin spawning zombies
     public void StartSpawning()
     {
         Debug.Log("ZombieSpawner: StartSpawning called");
@@ -120,7 +130,7 @@ public class ZombieSpawner : MonoBehaviour
         {
             isSpawning = true;
 
-            // If it's a boss wave, spawn the boss immediately
+            // Spawn boss immediately if it's a boss wave
             if (isBossWave && !hasBossSpawned)
             {
                 SpawnBossZombie();
@@ -131,6 +141,7 @@ public class ZombieSpawner : MonoBehaviour
         }
     }
 
+    // Stop spawning zombies
     public void StopSpawning()
     {
         Debug.Log("ZombieSpawner: StopSpawning called");
@@ -143,6 +154,7 @@ public class ZombieSpawner : MonoBehaviour
         }
     }
 
+    // Remove all existing zombies
     public void DestroyAllZombies()
     {
         GameObject[] zombies = GameObject.FindGameObjectsWithTag("Zombie");
@@ -153,6 +165,7 @@ public class ZombieSpawner : MonoBehaviour
         Debug.Log($"Destroyed {zombies.Length} zombies");
     }
 
+    // Coroutine for spawning zombies at intervals
     IEnumerator SpawnZombies()
     {
         Debug.Log("ZombieSpawner: Starting spawn coroutine");
@@ -163,6 +176,7 @@ public class ZombieSpawner : MonoBehaviour
         }
     }
 
+    // Handle zombie death event
     private void OnZombieKilled()
     {
         if (waveManager != null)
@@ -171,28 +185,31 @@ public class ZombieSpawner : MonoBehaviour
         }
     }
 
+    // Spawn regular zombie
     void SpawnZombie()
     {
         if (zombiePrefab == null) return;
 
+        // Choose random lane
         int randomLaneIndex = Random.Range(0, numberOfLanes);
         Vector3 spawnPosition = new Vector3(rightEdgeX, lanes[randomLaneIndex].position.y, 0);
 
+        // Create and configure zombie
         GameObject zombie = Instantiate(zombiePrefab, spawnPosition, Quaternion.Euler(180, 0, 180));
         zombie.tag = "Zombie";
-
-        // Always configure as normal zombie in regular spawn cycle
         ConfigureNormalZombie(zombie);
     }
 
+    // Spawn boss zombie
     void SpawnBossZombie()
     {
         if (zombiePrefab == null) return;
 
-        // Spawn boss in middle lane
+        // Spawn in middle lane
         int middleLaneIndex = numberOfLanes / 2;
         Vector3 spawnPosition = new Vector3(rightEdgeX, lanes[middleLaneIndex].position.y, 0);
 
+        // Create and configure boss
         GameObject bossZombie = Instantiate(zombiePrefab, spawnPosition, Quaternion.Euler(180, 0, 180));
         bossZombie.tag = "Zombie";
         ConfigureBossZombie(bossZombie);
@@ -201,12 +218,13 @@ public class ZombieSpawner : MonoBehaviour
         Debug.Log("Boss zombie spawned for this wave!");
     }
 
+    // Configure boss zombie properties
     private void ConfigureBossZombie(GameObject zombie)
     {
         // Scale up the boss
         zombie.transform.localScale *= bossScale;
 
-        // Set up renderers with boss visuals
+        // Set up visual properties
         SpriteRenderer[] renderers = zombie.GetComponentsInChildren<SpriteRenderer>(true);
         foreach (SpriteRenderer renderer in renderers)
         {
@@ -215,12 +233,12 @@ public class ZombieSpawner : MonoBehaviour
             renderer.color = bossColor;
         }
 
-        // Set up boss movement
+        // Configure movement
         ZombieMovement zombieMovement = zombie.GetComponent<ZombieMovement>() ?? zombie.AddComponent<ZombieMovement>();
         zombieMovement.speed = bossSpeed;
         zombieMovement.leftEdgeX = leftEdgeX;
 
-        // Set up boss health
+        // Configure health
         ZombieHealth zombieHealth = zombie.GetComponent<ZombieHealth>() ?? zombie.AddComponent<ZombieHealth>();
         zombieHealth.SetMaxHealth(bossHealth);
         zombieHealth.IsBoss = true;
@@ -229,8 +247,10 @@ public class ZombieSpawner : MonoBehaviour
         Debug.Log($"Spawned BOSS zombie with Health: {bossHealth}, Speed: {bossSpeed:F2}");
     }
 
+    // Configure normal zombie properties
     private void ConfigureNormalZombie(GameObject zombie)
     {
+        // Set up visual properties
         SpriteRenderer[] renderers = zombie.GetComponentsInChildren<SpriteRenderer>(true);
         foreach (SpriteRenderer renderer in renderers)
         {
@@ -238,10 +258,12 @@ public class ZombieSpawner : MonoBehaviour
             renderer.sortingOrder = zombieOrderInLayer;
         }
 
+        // Configure movement
         ZombieMovement zombieMovement = zombie.GetComponent<ZombieMovement>() ?? zombie.AddComponent<ZombieMovement>();
         zombieMovement.speed = currentZombieSpeed;
         zombieMovement.leftEdgeX = leftEdgeX;
 
+        // Configure health
         ZombieHealth zombieHealth = zombie.GetComponent<ZombieHealth>() ?? zombie.AddComponent<ZombieHealth>();
         zombieHealth.SetMaxHealth(currentZombieHealth);
         zombieHealth.IsBoss = false;
@@ -251,41 +273,42 @@ public class ZombieSpawner : MonoBehaviour
     }
 }
 
+// ZombieMovement handles zombie movement and castle collision detection
 public class ZombieMovement : MonoBehaviour
 {
-    public float speed = 1f;
-    public float leftEdgeX = -10f;
-    public int damageToCastle = 20;
-    private CastleHealth castleHealth;
-    private bool hasAttackedCastle = false;
-    private Rigidbody2D rb2d;
+    // Movement and collision properties
+    public float speed = 1f;                // Movement speed
+    public float leftEdgeX = -10f;          // Castle position point
+    public int damageToCastle = 20;         // Damage dealt to castle
+    private CastleHealth castleHealth;      // Reference to castle health
+    private bool hasAttackedCastle = false; // Track if castle was attacked
+    private Rigidbody2D rb2d;               // Physics component
 
     void Start()
     {
+        // Get reference to castle
         castleHealth = FindObjectOfType<CastleHealth>();
 
-        // Set up Rigidbody2D
+        // Setup physics
         rb2d = GetComponent<Rigidbody2D>();
         if (rb2d == null)
         {
             rb2d = gameObject.AddComponent<Rigidbody2D>();
         }
-        rb2d.isKinematic = true;
-        rb2d.gravityScale = 0;
+        rb2d.isKinematic = true; // Use kinematic body for controlled movement
+        rb2d.gravityScale = 0;   // Disable gravity
 
-        // Get existing CapsuleCollider2D for knight collision
+        // Setup knight collision (not a trigger)
         CapsuleCollider2D mainCollider = GetComponent<CapsuleCollider2D>();
         if (mainCollider != null)
         {
-            // Ensure this one is NOT a trigger
             mainCollider.isTrigger = false;
         }
 
-        // Add a second BoxCollider2D for castle trigger detection
+        // Setup castle collision detection (is a trigger)
         BoxCollider2D triggerCollider = gameObject.AddComponent<BoxCollider2D>();
         triggerCollider.isTrigger = true;
-        // Make the trigger collider slightly smaller than the main collider
-        triggerCollider.size = new Vector2(0.5f, 1f); // Adjust size as needed
+        triggerCollider.size = new Vector2(0.5f, 1f);  // Smaller trigger area
         triggerCollider.offset = mainCollider != null ? mainCollider.offset : Vector2.zero;
 
         Debug.Log("Zombie initialized with dual colliders");
@@ -293,9 +316,10 @@ public class ZombieMovement : MonoBehaviour
 
     void Update()
     {
+        // Move zombie leftwards
         transform.Translate(Vector3.right * speed * Time.deltaTime);
 
-        // Keep the fallback check just in case
+        // Fallback check for castle collision
         if (transform.position.x <= leftEdgeX && !hasAttackedCastle)
         {
             if (castleHealth != null)
@@ -308,6 +332,7 @@ public class ZombieMovement : MonoBehaviour
         }
     }
 
+    // Handle trigger collision with castle
     void OnTriggerEnter2D(Collider2D other)
     {
         if (!hasAttackedCastle && other.CompareTag("Castle"))
